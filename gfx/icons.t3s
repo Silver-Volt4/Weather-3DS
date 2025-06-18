@@ -1,0 +1,7 @@
+--atlas -f rgba8888 -z auto
+icons/clear.png
+icons/cloudy.png
+icons/partlycloudy.png
+icons/rain.png
+icons/snow.png
+icons/thunderstorms.png

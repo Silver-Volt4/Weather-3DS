@@ -1,0 +1,15 @@
+--atlas -f rgba8888 -z auto
+numbers/digit0.png
+numbers/digit1.png
+numbers/digit2.png
+numbers/digit3.png
+numbers/digit4.png
+numbers/digit5.png
+numbers/digit6.png
+numbers/digit7.png
+numbers/digit8.png
+numbers/digit9.png 
+numbers/degrees.png
+numbers/minus.png
+numbers/celsius.png
+numbers/baldeagle.png
