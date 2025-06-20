@@ -1,33 +1,5 @@
 #include "include/app.h"
-
-template <int BufSize>
-class TextRenderer
-{
-protected:
-    C2D_TextBuf buffer;
-
-    void clearBuffer()
-    {
-        C2D_TextBufClear(buffer);
-    }
-
-    void configureText(C2D_Text *text, const char *string)
-    {
-        C2D_TextParse(text, buffer, string);
-        C2D_TextOptimize(text);
-    }
-
-public:
-    TextRenderer()
-    {
-        buffer = C2D_TextBufNew(BufSize);
-    }
-
-    ~TextRenderer()
-    {
-        C2D_TextBufDelete(buffer);
-    }
-};
+#include "include/graphics.h"
 
 App::App()
 {
@@ -223,22 +195,15 @@ void App::renderTop()
     }
 
     glance.draw(scale);
+
+    static uint8_t PAGE_SWITCH_BUTTONS_OFFSET = 6;
+
+    C2D_DrawText(&assets.staticText.L_previous, C2D_AlignLeft | C2D_AtBaseline | C2D_WithColor, PAGE_SWITCH_BUTTONS_OFFSET, Screen::SCREEN_HEIGHT - PAGE_SWITCH_BUTTONS_OFFSET, 0, 0.6, 0.6, whiteColor);
+    C2D_DrawText(&assets.staticText.R_next, C2D_AlignRight | C2D_AtBaseline | C2D_WithColor, Screen::TOP_SCREEN_WIDTH - PAGE_SWITCH_BUTTONS_OFFSET, Screen::SCREEN_HEIGHT - PAGE_SWITCH_BUTTONS_OFFSET, 0, 0.6, 0.6, whiteColor);
 }
 
 void App::renderBottom()
 {
-    static struct StaticText : TextRenderer<1024>
-    {
-        C2D_Text weeklyWeather;
-        C2D_Text home;
-
-        StaticText()
-        {
-            configureText(&weeklyWeather, "This week's forecast");
-            configureText(&home, "Press \uE073 to return to the Home menu.");
-        }
-    } texts;
-
     constexpr uint16_t WEEKDAY_WIDTH = Screen::BOTTOM_SCREEN_WIDTH / 4;
     constexpr uint8_t TOP_BAR_HEIGHT = 20;
     constexpr uint8_t BOTTOM_BAR_HEIGHT = 30;
@@ -248,10 +213,10 @@ void App::renderBottom()
 
     for (uint8_t i = 0; i < 4; i++)
     {
-        uint32_t color = C2D_Color32(10 * (i+1), 10 * (i+1), 10 * (i+1), 255);
+        uint32_t color = C2D_Color32(10 * (i + 1), 10 * (i + 1), 10 * (i + 1), 255);
         C2D_DrawRectSolid(WEEKDAY_WIDTH * i, TOP_BAR_HEIGHT, 0, WEEKDAY_WIDTH, 100, color);
     }
 
-    C2D_DrawText(&texts.weeklyWeather, C2D_AlignCenter | C2D_AtBaseline | C2D_WithColor, Screen::BOTTOM_SCREEN_WIDTH / 2, TOP_BAR_HEIGHT * 0.7 + 2, 0, 0.6, 0.6, whiteColor);
-    C2D_DrawText(&texts.home, C2D_AlignCenter | C2D_AtBaseline | C2D_WithColor, Screen::BOTTOM_SCREEN_WIDTH / 2, Screen::SCREEN_HEIGHT - BOTTOM_BAR_HEIGHT * 0.3, 0, 0.6, 0.6, whiteColor);
+    C2D_DrawText(&assets.staticText.weeklyWeather, C2D_AlignCenter | C2D_AtBaseline | C2D_WithColor, Screen::BOTTOM_SCREEN_WIDTH / 2, TOP_BAR_HEIGHT * 0.7 + 2, 0, 0.6, 0.6, whiteColor);
+    C2D_DrawText(&assets.staticText.home, C2D_AlignCenter | C2D_AtBaseline | C2D_WithColor, Screen::BOTTOM_SCREEN_WIDTH / 2, Screen::SCREEN_HEIGHT - BOTTOM_BAR_HEIGHT * 0.3, 0, 0.6, 0.6, whiteColor);
 }
