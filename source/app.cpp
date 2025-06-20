@@ -200,10 +200,16 @@ public:
 
 void App::renderTop()
 {
-    constexpr u32 topBlue = C2D_Color32(2, 167, 225, 255);
-    constexpr u32 bottomBlue = C2D_Color32(7, 51, 149, 255);
+    constexpr uint32_t topBlue = C2D_Color32(2, 167, 225, 255);
+    constexpr uint32_t bottomBlue = C2D_Color32(7, 51, 149, 255);
     static GlanceView glance = GlanceView(&assets, "Penistone", 100, 0, false);
+    static uint8_t fade = 255;
     static float scale = 0.3;
+
+    if (fade != 0)
+    {
+        C2D_Fade(C2D_Color32(0, 0, 0, fade -= 5));
+    }
 
     C2D_DrawRectangle(0, 0, 0, Screen::TOP_SCREEN_WIDTH, Screen::SCREEN_HEIGHT, topBlue, topBlue, bottomBlue, bottomBlue);
 
@@ -223,15 +229,29 @@ void App::renderBottom()
 {
     static struct StaticText : TextRenderer<1024>
     {
-        C2D_Text bottomScreen;
-        C2D_Text andAnother;
+        C2D_Text weeklyWeather;
+        C2D_Text home;
 
         StaticText()
         {
-            configureText(&bottomScreen, "Bottom screen example");
-            configureText(&andAnother, "And another! Woo! ščřž");
+            configureText(&weeklyWeather, "This week's forecast");
+            configureText(&home, "Press \uE073 to return to the Home menu.");
         }
     } texts;
-    C2D_DrawText(&texts.bottomScreen, C2D_AlignCenter | C2D_WithColor, Screen::BOTTOM_SCREEN_WIDTH / 2, 3, 0, 0.6, 0.6, whiteColor);
-    C2D_DrawText(&texts.andAnother, C2D_AlignCenter | C2D_WithColor, Screen::BOTTOM_SCREEN_WIDTH / 2, 20, 0, 0.6, 0.6, whiteColor);
+
+    constexpr uint16_t WEEKDAY_WIDTH = Screen::BOTTOM_SCREEN_WIDTH / 4;
+    constexpr uint8_t TOP_BAR_HEIGHT = 20;
+    constexpr uint8_t BOTTOM_BAR_HEIGHT = 30;
+
+    C2D_DrawRectSolid(0, 0, 0, Screen::BOTTOM_SCREEN_WIDTH, TOP_BAR_HEIGHT, C2D_Color32(7, 51, 149, 255));
+    C2D_DrawRectSolid(0, Screen::SCREEN_HEIGHT - BOTTOM_BAR_HEIGHT, 0, Screen::BOTTOM_SCREEN_WIDTH, BOTTOM_BAR_HEIGHT, C2D_Color32(7, 51, 149, 255));
+
+    for (uint8_t i = 0; i < 4; i++)
+    {
+        uint32_t color = C2D_Color32(10 * (i+1), 10 * (i+1), 10 * (i+1), 255);
+        C2D_DrawRectSolid(WEEKDAY_WIDTH * i, TOP_BAR_HEIGHT, 0, WEEKDAY_WIDTH, 100, color);
+    }
+
+    C2D_DrawText(&texts.weeklyWeather, C2D_AlignCenter | C2D_AtBaseline | C2D_WithColor, Screen::BOTTOM_SCREEN_WIDTH / 2, TOP_BAR_HEIGHT * 0.7 + 2, 0, 0.6, 0.6, whiteColor);
+    C2D_DrawText(&texts.home, C2D_AlignCenter | C2D_AtBaseline | C2D_WithColor, Screen::BOTTOM_SCREEN_WIDTH / 2, Screen::SCREEN_HEIGHT - BOTTOM_BAR_HEIGHT * 0.3, 0, 0.6, 0.6, whiteColor);
 }
