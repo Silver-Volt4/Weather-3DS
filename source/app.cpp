@@ -1,16 +1,31 @@
 #include "include/app.h"
 
-struct Label
+template <int BufSize>
+class TextRenderer
 {
+protected:
     C2D_TextBuf buffer;
-    C2D_Text text;
 
-    Label(const char *string, int bufsize)
+    void clearBuffer()
     {
-        buffer = C2D_TextBufNew(bufsize);
-        C2D_TextParse(&text, buffer, string);
-        text.width = 10;
-        C2D_TextOptimize(&text);
+        C2D_TextBufClear(buffer);
+    }
+
+    void configureText(C2D_Text *text, const char *string)
+    {
+        C2D_TextParse(text, buffer, string);
+        C2D_TextOptimize(text);
+    }
+
+public:
+    TextRenderer()
+    {
+        buffer = C2D_TextBufNew(BufSize);
+    }
+
+    ~TextRenderer()
+    {
+        C2D_TextBufDelete(buffer);
     }
 };
 
@@ -68,29 +83,42 @@ void App::render()
 class GlanceView
 {
     Assets *assets;
-    C2D_Sprite weatherIcon;
-    uint8_t textIndices[6];
+    struct : TextRenderer<128>
+    {
+        C2D_Text cityName;
+
+        void setCityName(std::string name)
+        {
+            clearBuffer();
+            configureText(&cityName, name.c_str());
+        }
+    } texts;
+    uint8_t weatherState;
+    struct
+    {
+        float scale = 1.0;
+        C2D_Image image;
+    } images[8];
     uint8_t textLength;
 
-    void renderBitmapText(float xPos, float yPos, float scale, C2D_ImageTint *tint)
+    void renderGlanceView(float xPos, float yPos, float scale, C2D_ImageTint *tint)
     {
         constexpr float gap = 30;
-        constexpr float space = 60;
+        constexpr float space = 10;
         float width = 0;
         float height = 0;
 
         for (uint8_t i = 0; i < textLength; i++)
         {
-            uint8_t index = textIndices[i];
-            if (index == 255)
+            auto frame = images[i];
+            if (frame.scale == 0)
             {
-                width += (space + gap) * scale;
+                width += (space)*scale;
             }
             else
             {
-                auto image = C2D_SpriteSheetGetImage(assets->numbers, index);
-                width += (image.subtex->width + gap) * scale;
-                height = std::max(height, image.subtex->height * scale);
+                width += (frame.image.subtex->width + gap) * scale * frame.scale;
+                height = std::max(height, frame.image.subtex->height * scale * frame.scale);
             }
         }
 
@@ -99,29 +127,32 @@ class GlanceView
 
         for (uint8_t i = 0; i < textLength; i++)
         {
-            uint8_t index = textIndices[i];
-            if (index == 255)
+            auto frame = images[i];
+            if (frame.scale == 0)
             {
-                xPos += (space + gap) * scale;
+                xPos += (space)*scale;
             }
             else
             {
-                auto image = C2D_SpriteSheetGetImage(assets->numbers, index);
-                C2D_DrawImageAt(image, xPos, yPos, 0, tint, scale, scale);
-                xPos += (image.subtex->width + gap) * scale;
+                C2D_DrawImageAt(frame.image, xPos, yPos + (height - frame.image.subtex->height * scale * frame.scale) / 2, 0, tint, scale * frame.scale, scale * frame.scale);
+                xPos += (frame.image.subtex->width + gap) * scale * frame.scale;
             }
         }
     }
 
 public:
-    GlanceView(Assets *assets, int8_t tempValue, uint8_t weatherState, bool celsius) : assets(assets)
+    GlanceView(Assets *assets, std::string name, int8_t tempValue, uint8_t weatherState, bool celsius) : assets(assets), weatherState(weatherState)
     {
-        C2D_SpriteFromSheet(&weatherIcon, assets->icons, weatherState);
+        texts.setCityName(name);
 
         textLength = 0;
+
+        images[textLength++] = {2.0, C2D_SpriteSheetGetImage(assets->icons, weatherState)};
+        images[textLength++].scale = 0;
+
         if (tempValue < 0)
         {
-            textIndices[textLength++] = 11; // index of -
+            images[textLength++].image = C2D_SpriteSheetGetImage(assets->numbers, 11); // minus
             tempValue = std::abs(tempValue);
         }
 
@@ -132,45 +163,38 @@ public:
             if (digit || !leading)
             {
                 leading = false;
-                textIndices[textLength++] = digit;
+                images[textLength++].image = C2D_SpriteSheetGetImage(assets->numbers, digit);
             }
             tempValue -= digit * order;
         }
 
         if (celsius)
         {
-            textIndices[textLength++] = 10; // index of °
-            textIndices[textLength++] = 12; // index of C
+            images[textLength++].image = C2D_SpriteSheetGetImage(assets->numbers, 10); // °
+            images[textLength++].image = C2D_SpriteSheetGetImage(assets->numbers, 12); // C
         }
         else
         {
-            textIndices[textLength++] = 255; // space
-            textIndices[textLength++] = 13;  // index of F
+            images[textLength++].scale = 0;
+            images[textLength++].image = C2D_SpriteSheetGetImage(assets->numbers, 13); // index of F
         }
-
-        constexpr float GLANCE_ICON_X = Screen::TOP_SCREEN_WIDTH / 2 - Screen::TOP_SCREEN_WIDTH / 3.5;
-        constexpr float GLANCE_ICON_Y = Screen::SCREEN_HEIGHT / 2;
-        C2D_SpriteSetPos(&weatherIcon, GLANCE_ICON_X, GLANCE_ICON_Y);
-        C2D_SpriteSetScale(&weatherIcon, 0.8, 0.8);
-        C2D_SpriteSetCenter(&weatherIcon, 0.5, 0.5);
     }
 
-    void draw()
+    void draw(float scale)
     {
         static C2D_ImageTint tint;
 
-        constexpr float GLANCE_TEXT_X = Screen::TOP_SCREEN_WIDTH / 6 + Screen::TOP_SCREEN_WIDTH / 2;
+        constexpr float GLANCE_TEXT_X = Screen::TOP_SCREEN_WIDTH / 2;
         constexpr float GLANCE_TEXT_Y = Screen::SCREEN_HEIGHT / 2;
 
         C2D_PlainImageTint(&tint, C2D_Color32(0, 0, 0, 100), 1);
-        renderBitmapText(GLANCE_TEXT_X + 4, GLANCE_TEXT_Y + 4, 0.3, &tint);
-        C2D_SpriteMove(&weatherIcon, +4, +4);
-        C2D_DrawSpriteTinted(&weatherIcon, &tint);
+        renderGlanceView(GLANCE_TEXT_X + 4, GLANCE_TEXT_Y + 4, scale, &tint);
 
-        C2D_PlainImageTint(&tint, C2D_Color32(255, 255, 255, 255), 1);
-        renderBitmapText(GLANCE_TEXT_X, GLANCE_TEXT_Y, 0.3, &tint);
-        C2D_SpriteMove(&weatherIcon, -4, -4);
-        C2D_DrawSprite(&weatherIcon);
+        C2D_PlainImageTint(&tint, C2D_Color32(255, 255, 255, 255), 0);
+        renderGlanceView(GLANCE_TEXT_X, GLANCE_TEXT_Y, scale, &tint);
+
+        C2D_DrawImageAt(C2D_SpriteSheetGetImage(assets->gui, 0), 40, 0, 0);
+        C2D_DrawText(&texts.cityName, C2D_AlignCenter | C2D_WithColor, 200, 6, 0, 0.8, 0.8, C2D_Color32(255, 255, 255, 255));
     }
 };
 
@@ -178,17 +202,36 @@ void App::renderTop()
 {
     constexpr u32 topBlue = C2D_Color32(2, 167, 225, 255);
     constexpr u32 bottomBlue = C2D_Color32(7, 51, 149, 255);
-    static GlanceView glance = GlanceView(&assets, 30, 0, true);
+    static GlanceView glance = GlanceView(&assets, "Penistone", 30, 0, true);
+    static float scale = 0.3;
 
     C2D_DrawRectangle(0, 0, 0, Screen::TOP_SCREEN_WIDTH, Screen::SCREEN_HEIGHT, topBlue, topBlue, bottomBlue, bottomBlue);
-    glance.draw();
+
+    if (input.kHeld & KEY_A)
+    {
+        scale += 0.001;
+    }
+    else if (input.kHeld & KEY_B)
+    {
+        scale -= 0.001;
+    }
+
+    glance.draw(scale);
 }
 
 void App::renderBottom()
 {
-    static Label labels[2] = {
-        Label("Test", 32),
-        Label("Druhý test", 32)};
+    static struct StaticText : TextRenderer<1024>
+    {
+        C2D_Text bottomScreen;
+        C2D_Text andAnother;
 
-    C2D_DrawText(&labels[1].text, C2D_AlignCenter | C2D_WithColor, Screen::BOTTOM_SCREEN_WIDTH / 2, 3, 0, 0.6, 0.6, whiteColor);
+        StaticText()
+        {
+            configureText(&bottomScreen, "Bottom screen example");
+            configureText(&andAnother, "And another! Woo! ščřž");
+        }
+    } texts;
+    C2D_DrawText(&texts.bottomScreen, C2D_AlignCenter | C2D_WithColor, Screen::BOTTOM_SCREEN_WIDTH / 2, 3, 0, 0.6, 0.6, whiteColor);
+    C2D_DrawText(&texts.andAnother, C2D_AlignCenter | C2D_WithColor, Screen::BOTTOM_SCREEN_WIDTH / 2, 20, 0, 0.6, 0.6, whiteColor);
 }

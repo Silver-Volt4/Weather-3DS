@@ -7,6 +7,7 @@ struct Assets
 {
     C2D_SpriteSheet numbers;
     C2D_SpriteSheet icons;
+    C2D_SpriteSheet gui;
 
     void init();
     void deinit();
