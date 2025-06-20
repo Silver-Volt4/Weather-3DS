@@ -93,7 +93,7 @@ class GlanceView
             configureText(&cityName, name.c_str());
         }
     } texts;
-    uint8_t weatherState;
+
     struct
     {
         float scale = 1.0;
@@ -104,7 +104,7 @@ class GlanceView
     void renderGlanceView(float xPos, float yPos, float scale, C2D_ImageTint *tint)
     {
         constexpr float gap = 30;
-        constexpr float space = 10;
+        constexpr float space = 60;
         float width = 0;
         float height = 0;
 
@@ -141,7 +141,7 @@ class GlanceView
     }
 
 public:
-    GlanceView(Assets *assets, std::string name, int8_t tempValue, uint8_t weatherState, bool celsius) : assets(assets), weatherState(weatherState)
+    GlanceView(Assets *assets, std::string name, int8_t tempValue, uint8_t weatherState, bool celsius) : assets(assets)
     {
         texts.setCityName(name);
 
@@ -188,7 +188,7 @@ public:
         constexpr float GLANCE_TEXT_Y = Screen::SCREEN_HEIGHT / 2;
 
         C2D_PlainImageTint(&tint, C2D_Color32(0, 0, 0, 100), 1);
-        renderGlanceView(GLANCE_TEXT_X + 4, GLANCE_TEXT_Y + 4, scale, &tint);
+        renderGlanceView(GLANCE_TEXT_X + (10 * scale), GLANCE_TEXT_Y + (10 * scale), scale, &tint);
 
         C2D_PlainImageTint(&tint, C2D_Color32(255, 255, 255, 255), 0);
         renderGlanceView(GLANCE_TEXT_X, GLANCE_TEXT_Y, scale, &tint);
@@ -202,7 +202,7 @@ void App::renderTop()
 {
     constexpr u32 topBlue = C2D_Color32(2, 167, 225, 255);
     constexpr u32 bottomBlue = C2D_Color32(7, 51, 149, 255);
-    static GlanceView glance = GlanceView(&assets, "Penistone", 30, 0, true);
+    static GlanceView glance = GlanceView(&assets, "Penistone", 100, 0, false);
     static float scale = 0.3;
 
     C2D_DrawRectangle(0, 0, 0, Screen::TOP_SCREEN_WIDTH, Screen::SCREEN_HEIGHT, topBlue, topBlue, bottomBlue, bottomBlue);
