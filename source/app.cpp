@@ -1,6 +1,9 @@
 #include "include/app.h"
 #include "include/graphics.h"
 
+constexpr uint32_t WHITE = C2D_Color32(255, 255, 255, 255);
+constexpr uint32_t SHADOW = C2D_Color32(0, 0, 0, 100);
+
 App::App()
 {
     romfsInit();
@@ -87,7 +90,6 @@ void parseTemperature(Assets &assets, SpriteTextRenderer<S> &str, int8_t tempVal
 
 class GlanceView
 {
-    Assets *assets;
     struct Texts : TextRenderer<256>
     {
         C2D_Text cityName;
@@ -104,44 +106,47 @@ class GlanceView
     SpriteTextRenderer<8> str;
 
 public:
-    GlanceView(Assets *assets, std::string name, int8_t tempValue, uint8_t weatherState, bool celsius) : assets(assets)
+    GlanceView(Assets &assets, std::string name, int8_t tempValue, uint8_t weatherState, bool celsius)
     {
         texts.setCityName(name);
 
-        str.addChar(C2D_SpriteSheetGetImage(assets->icons, weatherState), 2.0);
-        parseTemperature(*assets, str, tempValue, celsius);
+        str.addChar(C2D_SpriteSheetGetImage(assets.icons, weatherState), 2.0);
+        parseTemperature(assets, str, tempValue, celsius);
         str.scale(0.3);
     }
 
-    void draw()
+    void render()
     {
         static C2D_ImageTint tint;
 
         constexpr float GLANCE_TEXT_X = Screen::TOP_SCREEN_WIDTH / 2;
-        constexpr float GLANCE_TEXT_Y = Screen::SCREEN_HEIGHT / 2;
-
-        constexpr uint32_t WHITE = C2D_Color32(255, 255, 255, 255);
-        constexpr uint32_t SHADOW = C2D_Color32(0, 0, 0, 100);
+        constexpr float GLANCE_TEXT_Y = Screen::SCREEN_HEIGHT / 2 + 10;
 
         C2D_PlainImageTint(&tint, SHADOW, 1);
         str.render(GLANCE_TEXT_X + (10 * 0.3), GLANCE_TEXT_Y + (10 * 0.3), &tint);
 
         C2D_PlainImageTint(&tint, WHITE, 0);
-        float a = str.render(GLANCE_TEXT_X, GLANCE_TEXT_Y, &tint, 0);
+        float numberStartsAt = str.render(GLANCE_TEXT_X, GLANCE_TEXT_Y, &tint, 0);
 
-        C2D_DrawImageAt(C2D_SpriteSheetGetImage(assets->gui, 0), 40, 0, 0);
-        C2D_DrawText(&texts.cityName, C2D_AlignCenter | C2D_WithColor, 200, 6, 0, 0.8, 0.8, WHITE);
+        constexpr uint32_t TOP_BAR_GRAD_START = C2D_Color32(200, 200, 200, 100);
+        constexpr uint32_t TOP_BAR_GRAD_MID = C2D_Color32(0, 0, 0, 100);
+        constexpr uint32_t TOP_BAR_GRAD_END = C2D_Color32(0, 0, 0, 150);
 
-        C2D_DrawText(&texts.weatherState, C2D_AlignLeft | C2D_WithColor, a + (8 * 0.3), 50 + (8 * 0.3), 0, 1, 1, SHADOW);
-        C2D_DrawText(&texts.weatherState, C2D_AlignLeft | C2D_WithColor, a, 50, 0, 1, 1, WHITE);
+        C2D_DrawRectangle(0, 0, 0, Screen::TOP_SCREEN_WIDTH, 15, TOP_BAR_GRAD_START, TOP_BAR_GRAD_START, TOP_BAR_GRAD_MID, TOP_BAR_GRAD_MID);
+        C2D_DrawRectangle(0, 15, 0, Screen::TOP_SCREEN_WIDTH, 15, TOP_BAR_GRAD_MID, TOP_BAR_GRAD_MID, TOP_BAR_GRAD_END, TOP_BAR_GRAD_END);
+        C2D_DrawText(&texts.cityName, C2D_AlignCenter | C2D_WithColor, Screen::TOP_SCREEN_WIDTH / 2, (30 - 30 * 0.8) / 2, 0, 0.8, 0.8, WHITE);
+
+        C2D_DrawText(&texts.weatherState, C2D_AlignLeft | C2D_WithColor, numberStartsAt + (8 * 0.3), 50 + 10 + (8 * 0.3), 0, 1, 1, SHADOW);
+        C2D_DrawText(&texts.weatherState, C2D_AlignLeft | C2D_WithColor, numberStartsAt, 50 + 10, 0, 1, 1, WHITE);
     }
 };
 
 void App::renderTop()
 {
-    constexpr uint32_t topBlue = C2D_Color32(2, 167, 225, 255);
-    constexpr uint32_t bottomBlue = C2D_Color32(7, 51, 149, 255);
-    static GlanceView glance = GlanceView(&assets, "Penistone", 100, 0, false);
+    constexpr uint32_t GRADIENT_TOP = C2D_Color32(2, 167, 225, 255);
+    constexpr uint32_t GRADIENT_BOTTOM = C2D_Color32(7, 51, 149, 255);
+
+    static GlanceView glance = GlanceView(assets, "Penistone", 24, 0, true);
     static uint8_t fade = 255;
 
     if (fade != 0)
@@ -149,14 +154,14 @@ void App::renderTop()
         C2D_Fade(C2D_Color32(0, 0, 0, fade -= 5));
     }
 
-    C2D_DrawRectangle(0, 0, 0, Screen::TOP_SCREEN_WIDTH, Screen::SCREEN_HEIGHT, topBlue, topBlue, bottomBlue, bottomBlue);
+    C2D_DrawRectangle(0, 0, 0, Screen::TOP_SCREEN_WIDTH, Screen::SCREEN_HEIGHT, GRADIENT_TOP, GRADIENT_TOP, GRADIENT_BOTTOM, GRADIENT_BOTTOM);
 
-    glance.draw();
+    glance.render();
 
-    static uint8_t PAGE_SWITCH_BUTTONS_OFFSET = 6;
+    constexpr uint8_t PAGE_SWITCH_BUTTONS_PADDING = 6;
 
-    C2D_DrawText(&assets.staticText.L_previous, C2D_AlignLeft | C2D_AtBaseline | C2D_WithColor, PAGE_SWITCH_BUTTONS_OFFSET, Screen::SCREEN_HEIGHT - PAGE_SWITCH_BUTTONS_OFFSET, 0, 0.6, 0.6, whiteColor);
-    C2D_DrawText(&assets.staticText.R_next, C2D_AlignRight | C2D_AtBaseline | C2D_WithColor, Screen::TOP_SCREEN_WIDTH - PAGE_SWITCH_BUTTONS_OFFSET, Screen::SCREEN_HEIGHT - PAGE_SWITCH_BUTTONS_OFFSET, 0, 0.6, 0.6, whiteColor);
+    C2D_DrawText(&assets.staticText.L_previous, C2D_AlignLeft | C2D_AtBaseline | C2D_WithColor, PAGE_SWITCH_BUTTONS_PADDING, Screen::SCREEN_HEIGHT - PAGE_SWITCH_BUTTONS_PADDING, 0, 0.6, 0.6, whiteColor);
+    C2D_DrawText(&assets.staticText.R_next, C2D_AlignRight | C2D_AtBaseline | C2D_WithColor, Screen::TOP_SCREEN_WIDTH - PAGE_SWITCH_BUTTONS_PADDING, Screen::SCREEN_HEIGHT - PAGE_SWITCH_BUTTONS_PADDING, 0, 0.6, 0.6, whiteColor);
 }
 
 static SpriteTextRenderer<6> getBar(Assets &assets)
