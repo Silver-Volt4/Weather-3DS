@@ -107,21 +107,27 @@ class GlanceView
         C2D_Text cityName;
         C2D_Text weatherState;
 
-        void setCityName(std::string name)
+        void set(const char *_cityName, const char *_weatherState)
         {
             clearBuffer();
-            configureText(&cityName, name.c_str());
-            configureText(&weatherState, "Sunny");
+            configureText(&cityName, _cityName);
+            configureText(&weatherState, _weatherState);
         }
     } texts;
 
     SpriteTextRenderer<8> str;
 
 public:
-    GlanceView(Assets &assets, std::string name, int8_t tempValue, uint8_t weatherState, bool celsius)
+    GlanceView(Assets &assets, const char *name, const char *weatherStateName, int8_t tempValue, uint8_t weatherState, bool celsius)
     {
-        texts.setCityName(name);
+        set(assets, name, weatherStateName, tempValue, weatherState, celsius);
+    }
 
+    void set(Assets &assets, const char *name, const char *weatherStateName, int8_t tempValue, uint8_t weatherState, bool celsius)
+    {
+        texts.set(name, weatherStateName);
+
+        str.clear();
         str.addChar(C2D_SpriteSheetGetImage(assets.icons, weatherState), 2.0);
         parseTemperature(assets, str, tempValue, celsius);
         str.scale(0.3);
@@ -151,12 +157,21 @@ public:
 
 void App::renderTop()
 {
-    static GlanceView glance = GlanceView(assets, "Penistone", 24, 0, true);
+    static GlanceView glance = GlanceView(assets, "Penistone", "Sunny", 24, 0, true);
     static uint8_t fade = 255;
 
     if (fade != 0)
     {
         C2D_Fade(C2D_Color32(0, 0, 0, fade -= 5));
+    }
+
+    if (fade == 100)
+    {
+        auto w = weatherData.fetch();
+        int8_t celsiusTemp = w.tempKelvin - 273.15;
+        printf("%d\n", celsiusTemp);
+        printf("%d\n", (uint8_t)w.icon);
+        glance.set(assets, "Vilnius", w.state.c_str(), celsiusTemp, (uint8_t)w.icon, true);
     }
 
     C2D_DrawRectangle(0, 0, 0, Screen::TOP_SCREEN_WIDTH, Screen::SCREEN_HEIGHT, BLUE_GRADIENT_TOP, BLUE_GRADIENT_TOP, BLUE_GRADIENT_BOTTOM, BLUE_GRADIENT_BOTTOM);

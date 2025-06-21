@@ -7,6 +7,16 @@
 
 struct Assets
 {
+    enum WeatherIcons
+    {
+        CLEAR_SKY = 0,     // icons/clear.png
+        CLOUDY = 1,        // icons/cloudy.png
+        PARTLY_CLOUDY = 2, // icons/partlycloudy.png
+        RAIN = 3,          // icons/rain.png
+        SNOW = 4,          // icons/snow.png
+        STORMS = 5         // icons/thunderstorms.png
+    };
+
     C2D_SpriteSheet numbers;
     C2D_SpriteSheet icons;
 

@@ -4,3 +4,5 @@
 romfs
 build
 .vscode
+.env
+source/libs

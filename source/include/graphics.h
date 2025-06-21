@@ -47,13 +47,16 @@ class SpriteTextRenderer
 
     bool sizeCached = false;
     float _scale = 1.0;
-    float width = 0;
-    float height = 0;
+    float width;
+    float height;
 
     void cacheSize()
     {
         if (sizeCached)
             return;
+
+        width = 0.0;
+        height = 0.0;
         for (uint8_t i = 0; i < textLength; i++)
         {
             bool last = i + 1 == textLength;
@@ -109,8 +112,7 @@ public:
         return capture;
     }
 
-    void
-    clear()
+    void clear()
     {
         textLength = 0;
         sizeCached = false;

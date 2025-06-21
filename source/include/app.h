@@ -17,6 +17,7 @@
 
 #include "./interactions.h"
 #include "./assets.h"
+#include "./weather_data.h"
 
 class App
 {
@@ -27,6 +28,7 @@ private:
     Screen screen;
     InputHandler input;
     Assets assets;
+    WeatherDataLoader weatherData;
 
     static constexpr uint32_t whiteColor = C2D_Color32(0xFF, 0xFF, 0xFF, 0xFF);
     static constexpr uint32_t clearColor = C2D_Color32(0x00, 0x00, 0x00, 0xFF);

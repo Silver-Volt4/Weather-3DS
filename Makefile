@@ -9,6 +9,11 @@ endif
 TOPDIR ?= $(CURDIR)
 include $(DEVKITARM)/3ds_rules
 
+ifneq (,$(wildcard ./.env))
+    include .env
+    export
+endif
+
 #---------------------------------------------------------------------------------
 # TARGET is the name of the output
 # BUILD is the directory where object files & intermediate files will be placed
@@ -40,8 +45,8 @@ GRAPHICS	:=	gfx
 #GFXBUILD	:=	$(BUILD)
 ROMFS		:=	romfs
 GFXBUILD	:=	$(ROMFS)/gfx
-APP_TITLE	:= 	Prší++
-APP_DESCRIPTION := Česká karetní hra
+APP_TITLE	:= 	Weather-3DS
+APP_DESCRIPTION := Weather app for the 3DS
 
 #---------------------------------------------------------------------------------
 # options for code generation
@@ -54,7 +59,7 @@ CFLAGS	:=	-g -Wall -O2 -mword-relocations \
 
 CFLAGS	+=	$(INCLUDE) -D__3DS__
 
-CXXFLAGS	:= $(CFLAGS) -fno-rtti -fno-exceptions -std=c++17
+CXXFLAGS	:= $(CFLAGS) -fno-rtti -std=c++17 -DOWM_API_KEY=\"$(OWM_API_KEY)\"
 
 ASFLAGS	:=	-g $(ARCH)
 LDFLAGS	=	-specs=3dsx.specs -g $(ARCH) -Wl,-Map,$(notdir $*.map)
