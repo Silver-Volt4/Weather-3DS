@@ -9,7 +9,6 @@ struct Assets
 {
     C2D_SpriteSheet numbers;
     C2D_SpriteSheet icons;
-    C2D_SpriteSheet gui;
 
     struct StaticText : TextRenderer<1024>
     {
