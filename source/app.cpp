@@ -3,6 +3,8 @@
 
 constexpr uint32_t WHITE = C2D_Color32(255, 255, 255, 255);
 constexpr uint32_t SHADOW = C2D_Color32(0, 0, 0, 100);
+constexpr uint32_t BLUE_GRADIENT_TOP = C2D_Color32(2, 167, 225, 255);
+constexpr uint32_t BLUE_GRADIENT_BOTTOM = C2D_Color32(7, 51, 149, 255);
 
 App::App()
 {
@@ -88,6 +90,16 @@ void parseTemperature(Assets &assets, SpriteTextRenderer<S> &str, int8_t tempVal
     }
 }
 
+void drawGlossy(float x, float y, float z, float w, float h)
+{
+    constexpr uint32_t GLOSS_GRAD_START = C2D_Color32(200, 200, 200, 100);
+    constexpr uint32_t GLOSS_GRAD_MID = C2D_Color32(0, 0, 0, 100);
+    constexpr uint32_t GLOSS_GRAD_END = C2D_Color32(0, 0, 0, 150);
+
+    C2D_DrawRectangle(x, y, z, w, h / 2, GLOSS_GRAD_START, GLOSS_GRAD_START, GLOSS_GRAD_MID, GLOSS_GRAD_MID);
+    C2D_DrawRectangle(0, h / 2, z, w, h / 2, GLOSS_GRAD_MID, GLOSS_GRAD_MID, GLOSS_GRAD_END, GLOSS_GRAD_END);
+}
+
 class GlanceView
 {
     struct Texts : TextRenderer<256>
@@ -121,6 +133,7 @@ public:
 
         constexpr float GLANCE_TEXT_X = Screen::TOP_SCREEN_WIDTH / 2;
         constexpr float GLANCE_TEXT_Y = Screen::SCREEN_HEIGHT / 2 + 10;
+        constexpr uint8_t TOP_BAR_HEIGHT = 30;
 
         C2D_PlainImageTint(&tint, SHADOW, 1);
         str.render(GLANCE_TEXT_X + (10 * 0.3), GLANCE_TEXT_Y + (10 * 0.3), &tint);
@@ -128,12 +141,7 @@ public:
         C2D_PlainImageTint(&tint, WHITE, 0);
         float numberStartsAt = str.render(GLANCE_TEXT_X, GLANCE_TEXT_Y, &tint, 0);
 
-        constexpr uint32_t TOP_BAR_GRAD_START = C2D_Color32(200, 200, 200, 100);
-        constexpr uint32_t TOP_BAR_GRAD_MID = C2D_Color32(0, 0, 0, 100);
-        constexpr uint32_t TOP_BAR_GRAD_END = C2D_Color32(0, 0, 0, 150);
-
-        C2D_DrawRectangle(0, 0, 0, Screen::TOP_SCREEN_WIDTH, 15, TOP_BAR_GRAD_START, TOP_BAR_GRAD_START, TOP_BAR_GRAD_MID, TOP_BAR_GRAD_MID);
-        C2D_DrawRectangle(0, 15, 0, Screen::TOP_SCREEN_WIDTH, 15, TOP_BAR_GRAD_MID, TOP_BAR_GRAD_MID, TOP_BAR_GRAD_END, TOP_BAR_GRAD_END);
+        drawGlossy(0, 0, 0, Screen::TOP_SCREEN_WIDTH, TOP_BAR_HEIGHT);
         C2D_DrawText(&texts.cityName, C2D_AlignCenter | C2D_WithColor, Screen::TOP_SCREEN_WIDTH / 2, (30 - 30 * 0.8) / 2, 0, 0.8, 0.8, WHITE);
 
         C2D_DrawText(&texts.weatherState, C2D_AlignLeft | C2D_WithColor, numberStartsAt + (8 * 0.3), 50 + 10 + (8 * 0.3), 0, 1, 1, SHADOW);
@@ -143,9 +151,6 @@ public:
 
 void App::renderTop()
 {
-    constexpr uint32_t GRADIENT_TOP = C2D_Color32(2, 167, 225, 255);
-    constexpr uint32_t GRADIENT_BOTTOM = C2D_Color32(7, 51, 149, 255);
-
     static GlanceView glance = GlanceView(assets, "Penistone", 24, 0, true);
     static uint8_t fade = 255;
 
@@ -154,7 +159,7 @@ void App::renderTop()
         C2D_Fade(C2D_Color32(0, 0, 0, fade -= 5));
     }
 
-    C2D_DrawRectangle(0, 0, 0, Screen::TOP_SCREEN_WIDTH, Screen::SCREEN_HEIGHT, GRADIENT_TOP, GRADIENT_TOP, GRADIENT_BOTTOM, GRADIENT_BOTTOM);
+    C2D_DrawRectangle(0, 0, 0, Screen::TOP_SCREEN_WIDTH, Screen::SCREEN_HEIGHT, BLUE_GRADIENT_TOP, BLUE_GRADIENT_TOP, BLUE_GRADIENT_BOTTOM, BLUE_GRADIENT_BOTTOM);
 
     glance.render();
 
@@ -182,22 +187,35 @@ static SpriteTextRenderer<1> getIcon(Assets &assets)
 
 void App::renderBottom()
 {
+    constexpr uint32_t SPLITTER_START = C2D_Color32(0, 0, 0, 100);
+    constexpr uint32_t SPLITTER_END = C2D_Color32(200, 200, 200, 100);
+    constexpr uint8_t SPLITTER_MARGIN = 10;
     constexpr uint8_t BARS = 4;
     constexpr uint16_t WEEKDAY_WIDTH = Screen::BOTTOM_SCREEN_WIDTH / BARS;
     constexpr uint8_t TOP_BAR_HEIGHT = 20;
     constexpr uint8_t BOTTOM_BAR_HEIGHT = 30;
+
     static C2D_ImageTint tint;
     C2D_PlainImageTint(&tint, C2D_Color32(255, 255, 255, 255), 0);
 
     static SpriteTextRenderer<6> stuff = getBar(assets);
     static SpriteTextRenderer<1> stuff2 = getIcon(assets);
 
-    C2D_DrawRectSolid(0, 0, 0, Screen::BOTTOM_SCREEN_WIDTH, TOP_BAR_HEIGHT, C2D_Color32(7, 51, 149, 255));
+    C2D_DrawRectangle(0, 0, 0, Screen::TOP_SCREEN_WIDTH, Screen::SCREEN_HEIGHT, BLUE_GRADIENT_BOTTOM, BLUE_GRADIENT_BOTTOM, BLUE_GRADIENT_TOP, BLUE_GRADIENT_TOP);
+    drawGlossy(0, 0, 0, Screen::TOP_SCREEN_WIDTH, TOP_BAR_HEIGHT);
 
     for (uint8_t i = 0; i < BARS; i++)
     {
-        uint32_t color = C2D_Color32(10 * (i + 1), 10 * (i + 1), 10 * (i + 1), 255);
-        C2D_DrawRectSolid(WEEKDAY_WIDTH * i, TOP_BAR_HEIGHT, 0, WEEKDAY_WIDTH, 300, color);
+        if (i != 0)
+        {
+            C2D_DrawRectangle(
+                WEEKDAY_WIDTH * i,
+                TOP_BAR_HEIGHT + SPLITTER_MARGIN,
+                0,
+                2,
+                Screen::SCREEN_HEIGHT - BOTTOM_BAR_HEIGHT - TOP_BAR_HEIGHT - SPLITTER_MARGIN * 2,
+                SPLITTER_START, SPLITTER_END, SPLITTER_START, SPLITTER_END);
+        }
         stuff.render(WEEKDAY_WIDTH * (i + 0.5), 120, &tint);
         stuff2.render(WEEKDAY_WIDTH * (i + 0.5), 60, &tint);
     }
