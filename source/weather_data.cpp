@@ -10,7 +10,6 @@ using json = nlohmann::json;
 
 WeatherData WeatherDataLoader::fetch()
 {
-    httpcInit(0);
     Result ret = 0;
     httpcContext context;
     char *newurl = NULL;

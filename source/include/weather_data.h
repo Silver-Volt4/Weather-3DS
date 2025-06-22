@@ -18,8 +18,7 @@ struct WeatherData
 
 class WeatherDataLoader
 {
-    static constexpr char *API_KEY = OWM_API_KEY;
-
 public:
+    static constexpr char *API_KEY = OWM_API_KEY;
     WeatherData fetch();
 };

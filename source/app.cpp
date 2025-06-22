@@ -13,8 +13,11 @@ App::App()
     C3D_Init(C3D_DEFAULT_CMDBUF_SIZE);
     C2D_Init(C2D_DEFAULT_MAX_OBJECTS);
     C2D_Prepare();
+    httpcInit(0);
     screen.init();
     assets.init();
+
+    consoleInit(GFX_BOTTOM, NULL);
 }
 
 App::~App()
@@ -35,6 +38,7 @@ bool App::frame()
 void App::beforeRender()
 {
     input.scan();
+    httpWorker.poll();
     if (input.kDown & KEY_START)
     {
         running = false;
@@ -50,9 +54,9 @@ void App::render()
     C2D_SceneBegin(screen.top);
     renderTop();
 
-    C2D_TargetClear(screen.bottom, clearColor);
-    C2D_SceneBegin(screen.bottom);
-    renderBottom();
+    //C2D_TargetClear(screen.bottom, clearColor);
+    //C2D_SceneBegin(screen.bottom);
+    //renderBottom();
 
     C3D_FrameEnd(0);
 }
@@ -155,6 +159,26 @@ public:
     }
 };
 
+httpcContext what(const WeatherDataLoader &wdl)
+{
+    char base[300];
+    // TODO: ugly alloc stuff
+    // TODO: percent escape
+    auto r = snprintf(base, 300, "http://api.openweathermap.org/data/2.5/weather?q=%s&appid=%s", "Vilnius", wdl.API_KEY);
+    base[r] = '\0';
+    printf("%s\n", base);
+    httpcContext context;
+    httpcOpenContext(&context, HTTPC_METHOD_GET, base, 1);
+    httpcSetSSLOpt(&context, SSLCOPT_DisableVerify);
+    httpcSetKeepAlive(&context, HTTPC_KEEPALIVE_ENABLED);
+    httpcAddRequestHeaderField(&context, "User-Agent", "httpc-example/1.0.0");
+    httpcAddRequestHeaderField(&context, "Connection", "Keep-Alive");
+    return context;
+}
+
+static HttpRequest *request;
+static bool asdf = false;
+
 void App::renderTop()
 {
     static GlanceView glance = GlanceView(assets, "Penistone", "Sunny", 24, 0, true);
@@ -165,13 +189,19 @@ void App::renderTop()
         C2D_Fade(C2D_Color32(0, 0, 0, fade -= 5));
     }
 
-    if (fade == 100)
+    if (fade == 225)
     {
-        auto w = weatherData.fetch();
-        int8_t celsiusTemp = w.tempKelvin - 273.15;
-        printf("%d\n", celsiusTemp);
-        printf("%d\n", (uint8_t)w.icon);
-        glance.set(assets, "Vilnius", w.state.c_str(), celsiusTemp, (uint8_t)w.icon, true);
+        request = httpWorker.add(what(weatherData));
+        asdf = true;
+    }
+
+    if (asdf)
+    {
+        if(request->state == HttpRequest::State::FINISHED) {
+            printf("VIVA LA ASYNC! %d\n", request->httpStatusCode);
+            printf("data: %s\n", request->result);
+            asdf = false;
+        }
     }
 
     C2D_DrawRectangle(0, 0, 0, Screen::TOP_SCREEN_WIDTH, Screen::SCREEN_HEIGHT, BLUE_GRADIENT_TOP, BLUE_GRADIENT_TOP, BLUE_GRADIENT_BOTTOM, BLUE_GRADIENT_BOTTOM);
