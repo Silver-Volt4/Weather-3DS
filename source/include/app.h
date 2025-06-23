@@ -20,6 +20,12 @@
 #include "./weather_data.h"
 #include "./http.h"
 
+struct CityWeather
+{
+    std::string name;
+    WeatherData weatherData;
+};
+
 class App
 {
 public:
@@ -32,19 +38,12 @@ private:
     WeatherDataLoader weatherData;
     HttpRequestWorker httpWorker;
 
-    static constexpr uint32_t whiteColor = C2D_Color32(0xFF, 0xFF, 0xFF, 0xFF);
-    static constexpr uint32_t clearColor = C2D_Color32(0x00, 0x00, 0x00, 0xFF);
-    static constexpr uint32_t greenColor = C2D_Color32(0x18, 0x6b, 0x25, 0xFF);
-    
 public:
     App();
     ~App();
     bool frame();
 
 private:
-    void init();
-    void deinit();
-
     void beforeRender();
     void render();
     void renderTop();

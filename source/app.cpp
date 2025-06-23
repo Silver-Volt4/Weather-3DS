@@ -1,6 +1,7 @@
 #include "include/app.h"
 #include "include/graphics.h"
 
+constexpr uint32_t CLEAR = C2D_Color32(0, 0, 0, 255);
 constexpr uint32_t WHITE = C2D_Color32(255, 255, 255, 255);
 constexpr uint32_t SHADOW = C2D_Color32(0, 0, 0, 100);
 constexpr uint32_t BLUE_GRADIENT_TOP = C2D_Color32(2, 167, 225, 255);
@@ -17,7 +18,7 @@ App::App()
     screen.init();
     assets.init();
 
-    consoleInit(GFX_BOTTOM, NULL);
+    // consoleInit(GFX_BOTTOM, NULL);
 }
 
 App::~App()
@@ -50,13 +51,13 @@ void App::render()
 {
     C3D_FrameBegin(C3D_FRAME_SYNCDRAW);
 
-    C2D_TargetClear(screen.top, clearColor);
+    C2D_TargetClear(screen.top, CLEAR);
     C2D_SceneBegin(screen.top);
     renderTop();
 
-    //C2D_TargetClear(screen.bottom, clearColor);
-    //C2D_SceneBegin(screen.bottom);
-    //renderBottom();
+    C2D_TargetClear(screen.bottom, CLEAR);
+    C2D_SceneBegin(screen.bottom);
+    renderBottom();
 
     C3D_FrameEnd(0);
 }
@@ -122,11 +123,6 @@ class GlanceView
     SpriteTextRenderer<8> str;
 
 public:
-    GlanceView(Assets &assets, const char *name, const char *weatherStateName, int8_t tempValue, uint8_t weatherState, bool celsius)
-    {
-        set(assets, name, weatherStateName, tempValue, weatherState, celsius);
-    }
-
     void set(Assets &assets, const char *name, const char *weatherStateName, int8_t tempValue, uint8_t weatherState, bool celsius)
     {
         texts.set(name, weatherStateName);
@@ -159,29 +155,29 @@ public:
     }
 };
 
-httpcContext what(const WeatherDataLoader &wdl)
-{
-    char base[300];
-    // TODO: ugly alloc stuff
-    // TODO: percent escape
-    auto r = snprintf(base, 300, "http://api.openweathermap.org/data/2.5/weather?q=%s&appid=%s", "Vilnius", wdl.API_KEY);
-    base[r] = '\0';
-    printf("%s\n", base);
-    httpcContext context;
-    httpcOpenContext(&context, HTTPC_METHOD_GET, base, 1);
-    httpcSetSSLOpt(&context, SSLCOPT_DisableVerify);
-    httpcSetKeepAlive(&context, HTTPC_KEEPALIVE_ENABLED);
-    httpcAddRequestHeaderField(&context, "User-Agent", "httpc-example/1.0.0");
-    httpcAddRequestHeaderField(&context, "Connection", "Keep-Alive");
-    return context;
-}
+// httpcContext what(const WeatherDataLoader &wdl)
+// {
+//     char base[300];
+//     // TODO: ugly alloc stuff
+//     // TODO: percent escape
+//     auto r = snprintf(base, 300, "http://api.openweathermap.org/data/2.5/weather?q=%s&appid=%s", "Vilnius", wdl.API_KEY);
+//     base[r] = '\0';
+//     printf("%s\n", base);
+//     httpcContext context;
+//     httpcOpenContext(&context, HTTPC_METHOD_GET, base, 1);
+//     httpcSetSSLOpt(&context, SSLCOPT_DisableVerify);
+//     httpcSetKeepAlive(&context, HTTPC_KEEPALIVE_ENABLED);
+//     httpcAddRequestHeaderField(&context, "User-Agent", "httpc-example/1.0.0");
+//     httpcAddRequestHeaderField(&context, "Connection", "Keep-Alive");
+//     return context;
+// }
 
-static HttpRequest *request;
-static bool asdf = false;
+// static HttpRequest *request;
+// static bool asdf = false;
 
 void App::renderTop()
 {
-    static GlanceView glance = GlanceView(assets, "Penistone", "Sunny", 24, 0, true);
+    static GlanceView glance;
     static uint8_t fade = 255;
 
     if (fade != 0)
@@ -189,20 +185,20 @@ void App::renderTop()
         C2D_Fade(C2D_Color32(0, 0, 0, fade -= 5));
     }
 
-    if (fade == 225)
-    {
-        request = httpWorker.add(what(weatherData));
-        asdf = true;
-    }
+    // if (fade == 225)
+    // {
+    //     request = httpWorker.add(what(weatherData));
+    //     asdf = true;
+    // }
 
-    if (asdf)
-    {
-        if(request->state == HttpRequest::State::FINISHED) {
-            printf("VIVA LA ASYNC! %d\n", request->httpStatusCode);
-            printf("data: %s\n", request->result);
-            asdf = false;
-        }
-    }
+    // if (asdf)
+    // {
+    //     if(request->state == HttpRequest::State::FINISHED) {
+    //         printf("VIVA LA ASYNC! %d\n", request->httpStatusCode);
+    //         printf("data: %s\n", request->result);
+    //         asdf = false;
+    //     }
+    // }
 
     C2D_DrawRectangle(0, 0, 0, Screen::TOP_SCREEN_WIDTH, Screen::SCREEN_HEIGHT, BLUE_GRADIENT_TOP, BLUE_GRADIENT_TOP, BLUE_GRADIENT_BOTTOM, BLUE_GRADIENT_BOTTOM);
 
@@ -210,8 +206,8 @@ void App::renderTop()
 
     constexpr uint8_t PAGE_SWITCH_BUTTONS_PADDING = 6;
 
-    C2D_DrawText(&assets.staticText.L_previous, C2D_AlignLeft | C2D_AtBaseline | C2D_WithColor, PAGE_SWITCH_BUTTONS_PADDING, Screen::SCREEN_HEIGHT - PAGE_SWITCH_BUTTONS_PADDING, 0, 0.6, 0.6, whiteColor);
-    C2D_DrawText(&assets.staticText.R_next, C2D_AlignRight | C2D_AtBaseline | C2D_WithColor, Screen::TOP_SCREEN_WIDTH - PAGE_SWITCH_BUTTONS_PADDING, Screen::SCREEN_HEIGHT - PAGE_SWITCH_BUTTONS_PADDING, 0, 0.6, 0.6, whiteColor);
+    C2D_DrawText(&assets.staticText.L_previous, C2D_AlignLeft | C2D_AtBaseline | C2D_WithColor, PAGE_SWITCH_BUTTONS_PADDING, Screen::SCREEN_HEIGHT - PAGE_SWITCH_BUTTONS_PADDING, 0, 0.6, 0.6, WHITE);
+    C2D_DrawText(&assets.staticText.R_next, C2D_AlignRight | C2D_AtBaseline | C2D_WithColor, Screen::TOP_SCREEN_WIDTH - PAGE_SWITCH_BUTTONS_PADDING, Screen::SCREEN_HEIGHT - PAGE_SWITCH_BUTTONS_PADDING, 0, 0.6, 0.6, WHITE);
 }
 
 static SpriteTextRenderer<6> getBar(Assets &assets)
@@ -266,6 +262,6 @@ void App::renderBottom()
     }
 
     C2D_DrawRectSolid(0, Screen::SCREEN_HEIGHT - BOTTOM_BAR_HEIGHT, 0, Screen::BOTTOM_SCREEN_WIDTH, BOTTOM_BAR_HEIGHT, C2D_Color32(7, 51, 149, 255));
-    C2D_DrawText(&assets.staticText.weeklyWeather, C2D_AlignCenter | C2D_AtBaseline | C2D_WithColor, Screen::BOTTOM_SCREEN_WIDTH / 2, TOP_BAR_HEIGHT * 0.7 + 2, 0, 0.6, 0.6, whiteColor);
-    C2D_DrawText(&assets.staticText.home, C2D_AlignCenter | C2D_AtBaseline | C2D_WithColor, Screen::BOTTOM_SCREEN_WIDTH / 2, Screen::SCREEN_HEIGHT - BOTTOM_BAR_HEIGHT * 0.3, 0, 0.6, 0.6, whiteColor);
+    C2D_DrawText(&assets.staticText.weeklyWeather, C2D_AlignCenter | C2D_AtBaseline | C2D_WithColor, Screen::BOTTOM_SCREEN_WIDTH / 2, TOP_BAR_HEIGHT * 0.7 + 2, 0, 0.6, 0.6, WHITE);
+    C2D_DrawText(&assets.staticText.home, C2D_AlignCenter | C2D_AtBaseline | C2D_WithColor, Screen::BOTTOM_SCREEN_WIDTH / 2, Screen::SCREEN_HEIGHT - BOTTOM_BAR_HEIGHT * 0.3, 0, 0.6, 0.6, WHITE);
 }
