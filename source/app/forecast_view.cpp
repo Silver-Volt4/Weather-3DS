@@ -1,6 +1,7 @@
 #include "app.h"
 
 #include "../util/graphics.h"
+#include "../data/weather_data.h"
 
 constexpr uint32_t CLEAR = C2D_Color32(0, 0, 0, 255);
 constexpr uint32_t WHITE = C2D_Color32(255, 255, 255, 255);
@@ -51,95 +52,109 @@ void drawGlossy(float x, float y, float z, float w, float h)
     C2D_DrawRectangle(0, h / 2, z, w, h / 2, GLOSS_GRAD_MID, GLOSS_GRAD_MID, GLOSS_GRAD_END, GLOSS_GRAD_END);
 }
 
-class GlanceView
+void GlanceView::set(Assets &assets, const CityWeather &weather, bool celsius)
 {
-    struct Texts : TextRenderer<256>
-    {
-        C2D_Text cityName;
-        C2D_Text weatherState;
+    texts.set(weather.cityName.c_str(), weather.weatherData.state.c_str());
 
-        void set(const char *_cityName, const char *_weatherState)
+    str.clear();
+    str.addChar(C2D_SpriteSheetGetImage(assets.icons, (uint8_t)weather.weatherData.icon), 2.0);
+    parseTemperature(assets, str, weather.weatherData.tempKelvin - 273.5, celsius);
+    str.scale(0.3);
+    valid = true;
+}
+
+void GlanceView::render()
+{
+    if (!valid)
+        return;
+    static C2D_ImageTint tint;
+
+    constexpr float GLANCE_TEXT_X = Screen::TOP_SCREEN_WIDTH / 2;
+    constexpr float GLANCE_TEXT_Y = Screen::SCREEN_HEIGHT / 2 + 10;
+    constexpr uint8_t TOP_BAR_HEIGHT = 30;
+
+    C2D_PlainImageTint(&tint, SHADOW, 1);
+    str.render(GLANCE_TEXT_X + (10 * 0.3), GLANCE_TEXT_Y + (10 * 0.3), &tint);
+
+    C2D_PlainImageTint(&tint, WHITE, 0);
+    float numberStartsAt = str.render(GLANCE_TEXT_X, GLANCE_TEXT_Y, &tint, 0);
+
+    drawGlossy(0, 0, 0, Screen::TOP_SCREEN_WIDTH, TOP_BAR_HEIGHT);
+    C2D_DrawText(&texts.cityName, C2D_AlignCenter | C2D_WithColor, Screen::TOP_SCREEN_WIDTH / 2, (30 - 30 * 0.8) / 2, 0, 0.8, 0.8, WHITE);
+
+    C2D_DrawText(&texts.weatherState, C2D_AlignLeft | C2D_WithColor, numberStartsAt + (8 * 0.3), 50 + 10 + (8 * 0.3), 0, 1, 1, SHADOW);
+    C2D_DrawText(&texts.weatherState, C2D_AlignLeft | C2D_WithColor, numberStartsAt, 50 + 10, 0, 1, 1, WHITE);
+}
+
+ForecastView::ForecastView()
+{
+    // TODO: Free these
+    pages.push_back(new CityWeather{"Penistone", {}});
+    pages.push_back(currentPage = new CityWeather{"Vilnius", {}});
+    pages.push_back(new CityWeather{"Prague", {}});
+}
+
+void ForecastView::poll(App &app)
+{
+    static bool init = false;
+    if (!init)
+    {
+        init = true;
+        updateWeather(app);
+    }
+    for (auto page : pages)
+    {
+        if (page->fetch && page->fetch->state == HttpRequest::FINISHED)
         {
-            clearBuffer();
-            configureText(&cityName, _cityName);
-            configureText(&weatherState, _weatherState);
+            page->weatherData = WeatherDataLoader::parseResponse(page->fetch);
+            delete page->fetch;
+            page->fetch = nullptr;
+            if (page == currentPage)
+            {
+                glance.set(app.assets, *currentPage, celsius);
+            }
         }
-    } texts;
-
-    SpriteTextRenderer<8> str;
-
-public:
-    void set(Assets &assets, const char *name, const char *weatherStateName, int8_t tempValue, uint8_t weatherState, bool celsius)
-    {
-        texts.set(name, weatherStateName);
-
-        str.clear();
-        str.addChar(C2D_SpriteSheetGetImage(assets.icons, weatherState), 2.0);
-        parseTemperature(assets, str, tempValue, celsius);
-        str.scale(0.3);
     }
 
-    void render()
+    if (app.input.kDown & KEY_Y)
     {
-        static C2D_ImageTint tint;
-
-        constexpr float GLANCE_TEXT_X = Screen::TOP_SCREEN_WIDTH / 2;
-        constexpr float GLANCE_TEXT_Y = Screen::SCREEN_HEIGHT / 2 + 10;
-        constexpr uint8_t TOP_BAR_HEIGHT = 30;
-
-        C2D_PlainImageTint(&tint, SHADOW, 1);
-        str.render(GLANCE_TEXT_X + (10 * 0.3), GLANCE_TEXT_Y + (10 * 0.3), &tint);
-
-        C2D_PlainImageTint(&tint, WHITE, 0);
-        float numberStartsAt = str.render(GLANCE_TEXT_X, GLANCE_TEXT_Y, &tint, 0);
-
-        drawGlossy(0, 0, 0, Screen::TOP_SCREEN_WIDTH, TOP_BAR_HEIGHT);
-        C2D_DrawText(&texts.cityName, C2D_AlignCenter | C2D_WithColor, Screen::TOP_SCREEN_WIDTH / 2, (30 - 30 * 0.8) / 2, 0, 0.8, 0.8, WHITE);
-
-        C2D_DrawText(&texts.weatherState, C2D_AlignLeft | C2D_WithColor, numberStartsAt + (8 * 0.3), 50 + 10 + (8 * 0.3), 0, 1, 1, SHADOW);
-        C2D_DrawText(&texts.weatherState, C2D_AlignLeft | C2D_WithColor, numberStartsAt, 50 + 10, 0, 1, 1, WHITE);
+        ;
     }
-};
 
-// httpcContext what(const WeatherDataLoader &wdl)
-// {
-//     char base[300];
-//     // TODO: ugly alloc stuff
-//     // TODO: percent escape
-//     auto r = snprintf(base, 300, "http://api.openweathermap.org/data/2.5/weather?q=%s&appid=%s", "Vilnius", wdl.API_KEY);
-//     base[r] = '\0';
-//     printf("%s\n", base);
-//     httpcContext context;
-//     httpcOpenContext(&context, HTTPC_METHOD_GET, base, 1);
-//     httpcSetSSLOpt(&context, SSLCOPT_DisableVerify);
-//     httpcSetKeepAlive(&context, HTTPC_KEEPALIVE_ENABLED);
-//     httpcAddRequestHeaderField(&context, "User-Agent", "httpc-example/1.0.0");
-//     httpcAddRequestHeaderField(&context, "Connection", "Keep-Alive");
-//     return context;
-// }
+    if (app.input.kDown & (KEY_L | KEY_R))
+    {
+        auto pos = std::find(pages.begin(), pages.end(), currentPage);
 
-// static HttpRequest *request;
-// static bool asdf = false;
+        if (app.input.kDown & KEY_L)
+        {
+            if (pos != pages.begin())
+            {
+                pos -= 1;
+                currentPage = *pos;
+            }
+        }
+        else
+        {
+            if (pos != pages.end() && (pos += 1) != pages.end())
+            {
+                currentPage = *pos;
+            }
+        }
+
+        glance.set(app.assets, *currentPage, celsius);
+    }
+}
+
+void ForecastView::updateWeather(App &app)
+{
+    for (auto page : pages)
+    {
+        page->fetch = app.httpWorker.add(WeatherDataLoader::requestWeatherFor(page->cityName));
+    }
+}
 
 void ForecastView::renderTop(App &app)
 {
-    static GlanceView glance;
-
-    // if (fade == 225)
-    // {
-    //     request = httpWorker.add(what(weatherData));
-    //     asdf = true;
-    // }
-
-    // if (asdf)
-    // {
-    //     if(request->state == HttpRequest::State::FINISHED) {
-    //         printf("VIVA LA ASYNC! %d\n", request->httpStatusCode);
-    //         printf("data: %s\n", request->result);
-    //         asdf = false;
-    //     }
-    // }
-
     C2D_DrawRectangle(0, 0, 0, Screen::TOP_SCREEN_WIDTH, Screen::SCREEN_HEIGHT, BLUE_GRADIENT_TOP, BLUE_GRADIENT_TOP, BLUE_GRADIENT_BOTTOM, BLUE_GRADIENT_BOTTOM);
 
     glance.render();

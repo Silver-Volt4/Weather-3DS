@@ -22,11 +22,12 @@ private:
     uint32_t downloadedBytes = 0;
     httpcContext context;
     HTTPC_RequestStatus contextStatus = HTTPC_RequestStatus::HTTPC_STATUS_REQUEST_IN_PROGRESS;
-    HttpRequest(httpcContext context);
-    ~HttpRequest();
     void poll();
 
 public:
+    HttpRequest(httpcContext context);
+    ~HttpRequest();
+
     uint32_t httpStatusCode = 0;
     State state = CREATED;
     uint8_t *result = nullptr;

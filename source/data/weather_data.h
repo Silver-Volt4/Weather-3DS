@@ -7,6 +7,7 @@
 #endif
 
 #include "../util/assets.h"
+#include "../util/http.h"
 #include <string>
 
 struct WeatherData
@@ -20,5 +21,6 @@ class WeatherDataLoader
 {
 public:
     static constexpr char *API_KEY = OWM_API_KEY;
-    WeatherData fetch();
+    static httpcContext requestWeatherFor(std::string &cityName);
+    static WeatherData parseResponse(HttpRequest *request);
 };

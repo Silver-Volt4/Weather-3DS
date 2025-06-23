@@ -31,7 +31,6 @@ private:
     Screen screen;
     InputHandler input;
     Assets assets;
-    WeatherDataLoader weatherData;
     HttpRequestWorker httpWorker;
 
     struct

@@ -45,6 +45,13 @@ void App::beforeRender()
         running = false;
         return;
     }
+
+    switch (views.current)
+    {
+    case views.FORECAST:
+        views.forecast.poll(*this);
+        break;
+    }
 }
 
 void App::render()
@@ -65,6 +72,7 @@ void App::render()
     {
     case views.FORECAST:
         views.forecast.renderTop(*this);
+        break;
     }
 
     C2D_TargetClear(screen.bottom, CLEAR);
@@ -74,6 +82,7 @@ void App::render()
     {
     case views.FORECAST:
         views.forecast.renderBottom(*this);
+        break;
     }
 
     C3D_FrameEnd(0);
