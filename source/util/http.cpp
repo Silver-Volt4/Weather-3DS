@@ -1,4 +1,4 @@
-#include "./include/http.h"
+#include "http.h"
 
 #include <3ds.h>
 #include <stdio.h>

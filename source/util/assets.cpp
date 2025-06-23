@@ -1,4 +1,4 @@
-#include "include/assets.h"
+#include "assets.h"
 
 void Assets::init()
 {

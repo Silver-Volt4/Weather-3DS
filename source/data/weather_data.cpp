@@ -1,6 +1,6 @@
-#include "./include/weather_data.h"
+#include "weather_data.h"
 
-#include "libs/json.hpp"
+#include "../libs/json.hpp"
 
 #include <3ds.h>
 #include <stdio.h>

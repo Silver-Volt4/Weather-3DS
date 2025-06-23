@@ -1,5 +1,5 @@
 #include <3ds.h>
-#include "include/interactions.h"
+#include "interactions.h"
 
 void Screen::init()
 {

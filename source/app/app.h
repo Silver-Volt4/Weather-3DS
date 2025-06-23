@@ -8,23 +8,17 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <time.h>
+#include <math.h>
 
 #include <vector>
 #include <random>
 #include <algorithm>
 #include <memory>
-#include <math.h>
 
-#include "./interactions.h"
-#include "./assets.h"
-#include "./weather_data.h"
-#include "./http.h"
-
-struct CityWeather
-{
-    std::string name;
-    WeatherData weatherData;
-};
+#include "../util/interactions.h"
+#include "../util/assets.h"
+#include "../util/http.h"
+#include "../data/weather_data.h"
 
 class App
 {

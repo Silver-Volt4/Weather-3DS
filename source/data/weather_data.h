@@ -6,7 +6,7 @@
 #error "OpenWeatherMap API key is missing, specify it in .env file"
 #endif
 
-#include "./assets.h"
+#include "../util/assets.h"
 #include <string>
 
 struct WeatherData

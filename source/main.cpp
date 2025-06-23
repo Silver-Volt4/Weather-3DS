@@ -11,7 +11,7 @@
 #include <random>
 #include <algorithm>
 
-#include "include/app.h"
+#include "app/app.h"
 
 int main()
 {

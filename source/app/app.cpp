@@ -1,5 +1,5 @@
-#include "include/app.h"
-#include "include/graphics.h"
+#include "../util/graphics.h"
+#include "app.h"
 
 constexpr uint32_t CLEAR = C2D_Color32(0, 0, 0, 255);
 constexpr uint32_t WHITE = C2D_Color32(255, 255, 255, 255);

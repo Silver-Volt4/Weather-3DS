@@ -3,7 +3,7 @@
 #include <3ds.h>
 #include <citro2d.h>
 
-#include "./graphics.h"
+#include "graphics.h"
 
 struct Assets
 {
