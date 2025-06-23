@@ -19,10 +19,12 @@
 #include "../util/assets.h"
 #include "../util/http.h"
 #include "../data/weather_data.h"
+#include "forecast_view.h"
 
 class App
 {
-public:
+    friend ForecastView;
+
 private:
     bool running = true;
 
@@ -32,6 +34,16 @@ private:
     WeatherDataLoader weatherData;
     HttpRequestWorker httpWorker;
 
+    struct
+    {
+        ForecastView forecast;
+
+        enum
+        {
+            FORECAST
+        } current = FORECAST;
+    } views;
+
 public:
     App();
     ~App();
@@ -40,6 +52,4 @@ public:
 private:
     void beforeRender();
     void render();
-    void renderTop();
-    void renderBottom();
 };
