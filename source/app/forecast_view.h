@@ -2,21 +2,25 @@
 
 #include <string>
 #include <vector>
+#include <optional>
 
 #include "app.h"
 #include "../data/weather_data.h"
 
 class App;
+class ForecastView;
 
 struct CityWeather
 {
     std::string cityName;
-    WeatherData weatherData;
+    std::optional<WeatherData> weatherData;
     HttpRequest *fetch = nullptr;
 };
 
 class GlanceView
 {
+    ForecastView *forecastView;
+
     struct Texts : TextRenderer<256>
     {
         C2D_Text cityName;
@@ -25,32 +29,38 @@ class GlanceView
         void set(const char *_cityName, const char *_weatherState)
         {
             clearBuffer();
-            configureText(&cityName, _cityName);
-            configureText(&weatherState, _weatherState);
+            if (_cityName)
+                configureText(&cityName, _cityName);
+            if (_weatherState)
+                configureText(&weatherState, _weatherState);
         }
     } texts;
 
-    bool valid = false;
+    CityWeather *cachedWeatherState = nullptr;
     SpriteTextRenderer<8> str;
 
 public:
-    void set(Assets &assets, const CityWeather &cityWeather, bool celsius);
+    GlanceView(ForecastView *forecastView);
+    void rebuild();
     void render();
 };
 
 class ForecastView
 {
-    CityWeather *currentPage = nullptr;
-    std::vector<CityWeather *> pages;
+    friend GlanceView;
 
+    App *app;
+    std::vector<CityWeather *> pages;
     GlanceView glance;
-    bool celsius = true;
 
 public:
-    ForecastView();
+    ForecastView(App *app);
 
-    void poll(App &app);
-    void renderTop(App &app);
-    void renderBottom(App &app);
-    void updateWeather(App &app);
+    CityWeather *currentPage = nullptr;
+    bool celsius = true;
+
+    void poll();
+    void renderTop();
+    void renderBottom();
+    void updateWeather();
 };

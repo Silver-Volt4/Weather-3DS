@@ -7,7 +7,7 @@ constexpr uint32_t SHADOW = C2D_Color32(0, 0, 0, 100);
 constexpr uint32_t BLUE_GRADIENT_TOP = C2D_Color32(2, 167, 225, 255);
 constexpr uint32_t BLUE_GRADIENT_BOTTOM = C2D_Color32(7, 51, 149, 255);
 
-App::App()
+App::App(): views(this)
 {
     romfsInit();
     gfxInitDefault();
@@ -49,7 +49,7 @@ void App::beforeRender()
     switch (views.current)
     {
     case views.FORECAST:
-        views.forecast.poll(*this);
+        views.forecast.poll();
         break;
     }
 }
@@ -71,7 +71,7 @@ void App::render()
     switch (views.current)
     {
     case views.FORECAST:
-        views.forecast.renderTop(*this);
+        views.forecast.renderTop();
         break;
     }
 
@@ -81,7 +81,7 @@ void App::render()
     switch (views.current)
     {
     case views.FORECAST:
-        views.forecast.renderBottom(*this);
+        views.forecast.renderBottom();
         break;
     }
 

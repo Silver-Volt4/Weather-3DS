@@ -24,31 +24,31 @@
 class App
 {
     friend ForecastView;
+    
+    struct Views
+    {
+        ForecastView forecast;
+        
+        enum
+        {
+            FORECAST
+        } current = FORECAST;
+        
+        Views(App *app) : forecast(app) {};
+    } views;
 
-private:
     bool running = true;
 
+    void beforeRender();
+    void render();
+
+public:
     Screen screen;
     InputHandler input;
     Assets assets;
     HttpRequestWorker httpWorker;
 
-    struct
-    {
-        ForecastView forecast;
-
-        enum
-        {
-            FORECAST
-        } current = FORECAST;
-    } views;
-
-public:
     App();
     ~App();
     bool frame();
-
-private:
-    void beforeRender();
-    void render();
 };

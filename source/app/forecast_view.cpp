@@ -52,26 +52,50 @@ void drawGlossy(float x, float y, float z, float w, float h)
     C2D_DrawRectangle(0, h / 2, z, w, h / 2, GLOSS_GRAD_MID, GLOSS_GRAD_MID, GLOSS_GRAD_END, GLOSS_GRAD_END);
 }
 
-void GlanceView::set(Assets &assets, const CityWeather &weather, bool celsius)
+GlanceView::GlanceView(ForecastView *forecastView) : forecastView(forecastView)
 {
-    texts.set(weather.cityName.c_str(), weather.weatherData.state.c_str());
+}
 
-    str.clear();
-    str.addChar(C2D_SpriteSheetGetImage(assets.icons, (uint8_t)weather.weatherData.icon), 2.0);
-    parseTemperature(assets, str, weather.weatherData.tempKelvin - 273.5, celsius);
-    str.scale(0.3);
-    valid = true;
+// Recalculate inner state
+void GlanceView::rebuild()
+{
+    const char *weatherState = nullptr;
+
+    if (forecastView->currentPage->weatherData.has_value())
+    {
+        weatherState = forecastView->currentPage->weatherData->state.c_str();
+        str.clear();
+
+        str.addChar(C2D_SpriteSheetGetImage(forecastView->app->assets.icons, (uint8_t)forecastView->currentPage->weatherData->icon), 2.0);
+        parseTemperature(forecastView->app->assets, str, forecastView->currentPage->weatherData->tempKelvin - 273.5, forecastView->celsius);
+        str.scale(0.3);
+    }
+
+    texts.set(forecastView->currentPage->cityName.c_str(), weatherState);
+
+    cachedWeatherState = forecastView->currentPage;
 }
 
 void GlanceView::render()
 {
-    if (!valid)
-        return;
     static C2D_ImageTint tint;
 
     constexpr float GLANCE_TEXT_X = Screen::TOP_SCREEN_WIDTH / 2;
     constexpr float GLANCE_TEXT_Y = Screen::SCREEN_HEIGHT / 2 + 10;
+
     constexpr uint8_t TOP_BAR_HEIGHT = 30;
+
+    if (!forecastView->currentPage)
+        return;
+
+    if (forecastView->currentPage != cachedWeatherState)
+    {
+        rebuild();
+    }
+
+    // Draw header
+    drawGlossy(0, 0, 0, Screen::TOP_SCREEN_WIDTH, TOP_BAR_HEIGHT);
+    C2D_DrawText(&texts.cityName, C2D_AlignCenter | C2D_WithColor, Screen::TOP_SCREEN_WIDTH / 2, (30 - 30 * 0.8) / 2, 0, 0.8, 0.8, WHITE);
 
     C2D_PlainImageTint(&tint, SHADOW, 1);
     str.render(GLANCE_TEXT_X + (10 * 0.3), GLANCE_TEXT_Y + (10 * 0.3), &tint);
@@ -79,14 +103,11 @@ void GlanceView::render()
     C2D_PlainImageTint(&tint, WHITE, 0);
     float numberStartsAt = str.render(GLANCE_TEXT_X, GLANCE_TEXT_Y, &tint, 0);
 
-    drawGlossy(0, 0, 0, Screen::TOP_SCREEN_WIDTH, TOP_BAR_HEIGHT);
-    C2D_DrawText(&texts.cityName, C2D_AlignCenter | C2D_WithColor, Screen::TOP_SCREEN_WIDTH / 2, (30 - 30 * 0.8) / 2, 0, 0.8, 0.8, WHITE);
-
     C2D_DrawText(&texts.weatherState, C2D_AlignLeft | C2D_WithColor, numberStartsAt + (8 * 0.3), 50 + 10 + (8 * 0.3), 0, 1, 1, SHADOW);
     C2D_DrawText(&texts.weatherState, C2D_AlignLeft | C2D_WithColor, numberStartsAt, 50 + 10, 0, 1, 1, WHITE);
 }
 
-ForecastView::ForecastView()
+ForecastView::ForecastView(App *app) : app(app), glance(this)
 {
     // TODO: Free these
     pages.push_back(new CityWeather{"Penistone", {}});
@@ -94,13 +115,13 @@ ForecastView::ForecastView()
     pages.push_back(new CityWeather{"Prague", {}});
 }
 
-void ForecastView::poll(App &app)
+void ForecastView::poll()
 {
     static bool init = false;
     if (!init)
     {
         init = true;
-        updateWeather(app);
+        updateWeather();
     }
     for (auto page : pages)
     {
@@ -108,24 +129,19 @@ void ForecastView::poll(App &app)
         {
             page->weatherData = WeatherDataLoader::parseResponse(page->fetch);
             delete page->fetch;
-            page->fetch = nullptr;
             if (page == currentPage)
             {
-                glance.set(app.assets, *currentPage, celsius);
+                glance.rebuild();
             }
+            page->fetch = nullptr;
         }
     }
 
-    if (app.input.kDown & KEY_Y)
-    {
-        ;
-    }
-
-    if (app.input.kDown & (KEY_L | KEY_R))
+    if (app->input.kDown & (KEY_L | KEY_R))
     {
         auto pos = std::find(pages.begin(), pages.end(), currentPage);
 
-        if (app.input.kDown & KEY_L)
+        if (app->input.kDown & KEY_L)
         {
             if (pos != pages.begin())
             {
@@ -140,20 +156,18 @@ void ForecastView::poll(App &app)
                 currentPage = *pos;
             }
         }
-
-        glance.set(app.assets, *currentPage, celsius);
     }
 }
 
-void ForecastView::updateWeather(App &app)
+void ForecastView::updateWeather()
 {
     for (auto page : pages)
     {
-        page->fetch = app.httpWorker.add(WeatherDataLoader::requestWeatherFor(page->cityName));
+        page->fetch = app->httpWorker.add(WeatherDataLoader::requestWeatherFor(page->cityName));
     }
 }
 
-void ForecastView::renderTop(App &app)
+void ForecastView::renderTop()
 {
     C2D_DrawRectangle(0, 0, 0, Screen::TOP_SCREEN_WIDTH, Screen::SCREEN_HEIGHT, BLUE_GRADIENT_TOP, BLUE_GRADIENT_TOP, BLUE_GRADIENT_BOTTOM, BLUE_GRADIENT_BOTTOM);
 
@@ -161,8 +175,8 @@ void ForecastView::renderTop(App &app)
 
     constexpr uint8_t PAGE_SWITCH_BUTTONS_PADDING = 6;
 
-    C2D_DrawText(&app.assets.staticText.L_previous, C2D_AlignLeft | C2D_AtBaseline | C2D_WithColor, PAGE_SWITCH_BUTTONS_PADDING, Screen::SCREEN_HEIGHT - PAGE_SWITCH_BUTTONS_PADDING, 0, 0.6, 0.6, WHITE);
-    C2D_DrawText(&app.assets.staticText.R_next, C2D_AlignRight | C2D_AtBaseline | C2D_WithColor, Screen::TOP_SCREEN_WIDTH - PAGE_SWITCH_BUTTONS_PADDING, Screen::SCREEN_HEIGHT - PAGE_SWITCH_BUTTONS_PADDING, 0, 0.6, 0.6, WHITE);
+    C2D_DrawText(&app->assets.staticText.L_previous, C2D_AlignLeft | C2D_AtBaseline | C2D_WithColor, PAGE_SWITCH_BUTTONS_PADDING, Screen::SCREEN_HEIGHT - PAGE_SWITCH_BUTTONS_PADDING, 0, 0.6, 0.6, WHITE);
+    C2D_DrawText(&app->assets.staticText.R_next, C2D_AlignRight | C2D_AtBaseline | C2D_WithColor, Screen::TOP_SCREEN_WIDTH - PAGE_SWITCH_BUTTONS_PADDING, Screen::SCREEN_HEIGHT - PAGE_SWITCH_BUTTONS_PADDING, 0, 0.6, 0.6, WHITE);
 }
 
 static SpriteTextRenderer<6> getBar(Assets &assets)
@@ -181,7 +195,7 @@ static SpriteTextRenderer<1> getIcon(Assets &assets)
     return a;
 }
 
-void ForecastView::renderBottom(App &app)
+void ForecastView::renderBottom()
 {
     constexpr uint32_t SPLITTER_START = C2D_Color32(0, 0, 0, 100);
     constexpr uint32_t SPLITTER_END = C2D_Color32(200, 200, 200, 100);
@@ -194,8 +208,8 @@ void ForecastView::renderBottom(App &app)
     static C2D_ImageTint tint;
     C2D_PlainImageTint(&tint, C2D_Color32(255, 255, 255, 255), 0);
 
-    static SpriteTextRenderer<6> stuff = getBar(app.assets);
-    static SpriteTextRenderer<1> stuff2 = getIcon(app.assets);
+    static SpriteTextRenderer<6> stuff = getBar(app->assets);
+    static SpriteTextRenderer<1> stuff2 = getIcon(app->assets);
 
     C2D_DrawRectangle(0, 0, 0, Screen::TOP_SCREEN_WIDTH, Screen::SCREEN_HEIGHT, BLUE_GRADIENT_BOTTOM, BLUE_GRADIENT_BOTTOM, BLUE_GRADIENT_TOP, BLUE_GRADIENT_TOP);
     drawGlossy(0, 0, 0, Screen::TOP_SCREEN_WIDTH, TOP_BAR_HEIGHT);
@@ -217,6 +231,6 @@ void ForecastView::renderBottom(App &app)
     }
 
     C2D_DrawRectSolid(0, Screen::SCREEN_HEIGHT - BOTTOM_BAR_HEIGHT, 0, Screen::BOTTOM_SCREEN_WIDTH, BOTTOM_BAR_HEIGHT, C2D_Color32(7, 51, 149, 255));
-    C2D_DrawText(&app.assets.staticText.weeklyWeather, C2D_AlignCenter | C2D_AtBaseline | C2D_WithColor, Screen::BOTTOM_SCREEN_WIDTH / 2, TOP_BAR_HEIGHT * 0.7 + 2, 0, 0.6, 0.6, WHITE);
-    C2D_DrawText(&app.assets.staticText.home, C2D_AlignCenter | C2D_AtBaseline | C2D_WithColor, Screen::BOTTOM_SCREEN_WIDTH / 2, Screen::SCREEN_HEIGHT - BOTTOM_BAR_HEIGHT * 0.3, 0, 0.6, 0.6, WHITE);
+    C2D_DrawText(&app->assets.staticText.weeklyWeather, C2D_AlignCenter | C2D_AtBaseline | C2D_WithColor, Screen::BOTTOM_SCREEN_WIDTH / 2, TOP_BAR_HEIGHT * 0.7 + 2, 0, 0.6, 0.6, WHITE);
+    C2D_DrawText(&app->assets.staticText.home, C2D_AlignCenter | C2D_AtBaseline | C2D_WithColor, Screen::BOTTOM_SCREEN_WIDTH / 2, Screen::SCREEN_HEIGHT - BOTTOM_BAR_HEIGHT * 0.3, 0, 0.6, 0.6, WHITE);
 }

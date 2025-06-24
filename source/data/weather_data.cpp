@@ -48,39 +48,39 @@ WeatherData WeatherDataLoader::parseResponse(HttpRequest *request)
         if (icon.is_string())
         {
             std::string iconName = icon.get<std::string>();
-            if (iconName.rfind("01", 0))
+            if (iconName.rfind("01", 0) != std::string::npos)
             {
                 w.icon = Assets::WeatherIcons::CLEAR_SKY;
             }
-            else if (iconName.rfind("02", 0))
+            else if (iconName.rfind("02", 0) != std::string::npos)
             {
                 w.icon = Assets::WeatherIcons::CLOUDY;
             }
-            else if (iconName.rfind("03", 0))
+            else if (iconName.rfind("03", 0) != std::string::npos)
             {
                 w.icon = Assets::WeatherIcons::PARTLY_CLOUDY;
             }
-            else if (iconName.rfind("04", 0))
+            else if (iconName.rfind("04", 0) != std::string::npos)
             {
                 w.icon = Assets::WeatherIcons::CLOUDY;
             }
-            else if (iconName.rfind("09", 0))
+            else if (iconName.rfind("09", 0) != std::string::npos)
             {
                 w.icon = Assets::WeatherIcons::RAIN;
             }
-            else if (iconName.rfind("10", 0))
+            else if (iconName.rfind("10", 0) != std::string::npos)
             {
                 w.icon = Assets::WeatherIcons::RAIN;
             }
-            else if (iconName.rfind("11", 0))
+            else if (iconName.rfind("11", 0) != std::string::npos)
             {
                 w.icon = Assets::WeatherIcons::STORMS;
             }
-            else if (iconName.rfind("13", 0))
+            else if (iconName.rfind("13", 0) != std::string::npos)
             {
                 w.icon = Assets::WeatherIcons::SNOW;
             }
-            else if (iconName.rfind("50", 0))
+            else if (iconName.rfind("50", 0) != std::string::npos)
             {
                 w.icon = Assets::WeatherIcons::SNOW;
             }
