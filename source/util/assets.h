@@ -23,14 +23,14 @@ struct Assets
     struct StaticText : TextRenderer<1024>
     {
         C2D_Text weeklyWeather;
-        C2D_Text home;
+        C2D_Text settings;
         C2D_Text L_previous;
         C2D_Text R_next;
 
         StaticText()
         {
             configureText(&weeklyWeather, "This week's forecast");
-            configureText(&home, "Press \uE073 to return to the Home menu.");
+            configureText(&settings, "Settings");
             configureText(&L_previous, "\uE004 Previous");
             configureText(&R_next, "Next \uE005");
         }

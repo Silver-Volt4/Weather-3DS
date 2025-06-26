@@ -19,9 +19,20 @@ struct CityWeather
     bool good();
 };
 
+class ActionButton
+{
+    ForecastView *parent;
+    bool down = false;
+
+public:
+    ActionButton(ForecastView *parent);
+
+    bool render(float x, float y, float w, float h, C2D_Text &text);
+};
+
 class GlanceView
 {
-    ForecastView *forecastView;
+    ForecastView *parent;
 
     struct Texts : TextRenderer<256>
     {
@@ -42,7 +53,7 @@ class GlanceView
     SpriteTextRenderer<8> str;
 
 public:
-    GlanceView(ForecastView *forecastView);
+    GlanceView(ForecastView *parent);
     void rebuild();
     void render();
 };
@@ -51,12 +62,14 @@ class ForecastView
 {
     friend GlanceView;
 
-    App *app;
     std::vector<CityWeather *> pages;
     GlanceView glance;
 
+    ActionButton settingsButton;
+
 public:
-    ForecastView(App *app);
+    App *parent;
+    ForecastView(App *parent);
 
     CityWeather *currentPage = nullptr;
     bool celsius = true;
