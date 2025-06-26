@@ -127,6 +127,15 @@ ForecastView::ForecastView(App *app) : parent(app), glance(this), settingsButton
     pages.push_back(new CityWeather{"Prague", {}});
 }
 
+ForecastView::~ForecastView()
+{
+    currentPage = nullptr;
+    for (auto page : pages)
+    {
+        delete page;
+    }
+}
+
 void ForecastView::poll()
 {
     static bool init = false;
@@ -139,8 +148,8 @@ void ForecastView::poll()
     {
         if (page->fetch && page->fetch->state == HttpRequest::FINISHED)
         {
-            page->weatherData = WeatherDataLoader::parseResponse(page->fetch);
-            delete page->fetch;
+            page->weatherData = WeatherDataLoader::parseResponse(*page->fetch);
+            page->fetch.reset();
             if (page == currentPage)
             {
                 glance.rebuild();

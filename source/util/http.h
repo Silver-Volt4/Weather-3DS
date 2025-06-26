@@ -1,6 +1,7 @@
 #pragma once
 
 #include <queue>
+#include <memory>
 #include <3ds.h>
 
 class HttpRequestWorker;
@@ -35,11 +36,11 @@ public:
 
 class HttpRequestWorker
 {
-    HttpRequest *current = nullptr;
-    std::queue<HttpRequest *> queue;
+    std::shared_ptr<HttpRequest> current = nullptr;
+    std::queue<std::shared_ptr<HttpRequest>> queue;
     void processCurrent();
 
 public:
     void poll();
-    HttpRequest *add(httpcContext context);
+    std::shared_ptr<HttpRequest> add(httpcContext context);
 };

@@ -3,6 +3,7 @@
 #include <string>
 #include <vector>
 #include <optional>
+#include <memory>
 
 #include "../data/weather_data.h"
 
@@ -13,7 +14,7 @@ struct CityWeather
 {
     std::string cityName;
     std::optional<WeatherData> weatherData;
-    HttpRequest *fetch = nullptr;
+    std::shared_ptr<HttpRequest> fetch = nullptr;
 
     bool good();
 };
@@ -72,6 +73,7 @@ private:
 
 public:
     ForecastView(App *parent);
+    ~ForecastView();
 
     CityWeather *currentPage = nullptr;
     bool celsius = true;

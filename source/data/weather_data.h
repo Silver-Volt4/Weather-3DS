@@ -22,5 +22,5 @@ class WeatherDataLoader
 public:
     static constexpr char *API_KEY = OWM_API_KEY;
     static httpcContext requestWeatherFor(std::string &cityName);
-    static WeatherData parseResponse(HttpRequest *request);
+    static WeatherData parseResponse(HttpRequest &request);
 };

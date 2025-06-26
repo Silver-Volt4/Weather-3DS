@@ -3,6 +3,7 @@
 #include <3ds.h>
 #include <stdio.h>
 #include <array>
+#include <memory>
 
 HttpRequest::HttpRequest(httpcContext context) : context(context)
 {
@@ -74,9 +75,9 @@ void HttpRequestWorker::poll()
     }
 }
 
-HttpRequest *HttpRequestWorker::add(httpcContext context)
+std::shared_ptr<HttpRequest> HttpRequestWorker::add(httpcContext context)
 {
-    auto c = new HttpRequest(context);
+    auto c = std::make_shared<HttpRequest>(context);
     queue.push(c);
     return c;
 }

@@ -25,10 +25,10 @@ httpcContext WeatherDataLoader::requestWeatherFor(std::string &cityName)
     return context;
 }
 
-WeatherData WeatherDataLoader::parseResponse(HttpRequest *request)
+WeatherData WeatherDataLoader::parseResponse(HttpRequest &request)
 {
     WeatherData w;
-    json j = json::parse(request->result, nullptr, false);
+    json j = json::parse(request.result, nullptr, false);
 
     if (j.is_discarded())
     {
