@@ -15,6 +15,8 @@ struct CityWeather
     std::string cityName;
     std::optional<WeatherData> weatherData;
     HttpRequest *fetch = nullptr;
+
+    bool good();
 };
 
 class GlanceView

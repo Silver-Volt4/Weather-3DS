@@ -2,10 +2,6 @@
 #include "app.h"
 
 constexpr uint32_t CLEAR = C2D_Color32(0, 0, 0, 255);
-constexpr uint32_t WHITE = C2D_Color32(255, 255, 255, 255);
-constexpr uint32_t SHADOW = C2D_Color32(0, 0, 0, 100);
-constexpr uint32_t BLUE_GRADIENT_TOP = C2D_Color32(2, 167, 225, 255);
-constexpr uint32_t BLUE_GRADIENT_BOTTOM = C2D_Color32(7, 51, 149, 255);
 
 App::App(): views(this)
 {

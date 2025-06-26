@@ -3,11 +3,15 @@
 #include "../util/graphics.h"
 #include "../data/weather_data.h"
 
-constexpr uint32_t CLEAR = C2D_Color32(0, 0, 0, 255);
 constexpr uint32_t WHITE = C2D_Color32(255, 255, 255, 255);
 constexpr uint32_t SHADOW = C2D_Color32(0, 0, 0, 100);
 constexpr uint32_t BLUE_GRADIENT_TOP = C2D_Color32(2, 167, 225, 255);
 constexpr uint32_t BLUE_GRADIENT_BOTTOM = C2D_Color32(7, 51, 149, 255);
+
+bool CityWeather::good()
+{
+    return fetch == nullptr && weatherData.has_value();
+}
 
 template <uint8_t S>
 void parseTemperature(Assets &assets, SpriteTextRenderer<S> &str, int8_t tempValue, bool celsius)
@@ -86,7 +90,9 @@ void GlanceView::render()
     constexpr uint8_t TOP_BAR_HEIGHT = 30;
 
     if (!forecastView->currentPage)
+    {
         return;
+    }
 
     if (forecastView->currentPage != cachedWeatherState)
     {
@@ -96,6 +102,11 @@ void GlanceView::render()
     // Draw header
     drawGlossy(0, 0, 0, Screen::TOP_SCREEN_WIDTH, TOP_BAR_HEIGHT);
     C2D_DrawText(&texts.cityName, C2D_AlignCenter | C2D_WithColor, Screen::TOP_SCREEN_WIDTH / 2, (30 - 30 * 0.8) / 2, 0, 0.8, 0.8, WHITE);
+
+    if (!forecastView->currentPage->good())
+    {
+        return;
+    }
 
     C2D_PlainImageTint(&tint, SHADOW, 1);
     str.render(GLANCE_TEXT_X + (10 * 0.3), GLANCE_TEXT_Y + (10 * 0.3), &tint);
