@@ -212,14 +212,14 @@ ActionButton::ActionButton(ForecastView *parent) : parent(parent)
 
 bool ActionButton::render(float x, float y, float w, float h, C2D_Text &text)
 {
-    auto &touch = parent->parent->input.touchCurrent;
+    auto &touch = parent->parent->input.touch();
     bool inButtonArea = touch.px > x && touch.px < x + w && touch.py > y && touch.py < y + h;
 
     if (parent->parent->input.kDown & KEY_TOUCH)
     {
         down = inButtonArea;
     }
-    else if (down)
+    else if (down && parent->parent->input.kHeld & KEY_TOUCH)
     {
         down = inButtonArea;
     }
@@ -233,9 +233,16 @@ bool ActionButton::render(float x, float y, float w, float h, C2D_Text &text)
         C2D_DrawRectangle(x, y, 0, w, h, BLUE_GRADIENT_TOP, BLUE_GRADIENT_TOP, BLUE_GRADIENT_BOTTOM, BLUE_GRADIENT_BOTTOM);
     }
 
-    C2D_DrawText(&text, C2D_AlignCenter | C2D_AtBaseline | C2D_WithColor, x + w / 2, y + h / 2 + 20*0.4, 0, 0.8, 0.8, WHITE);
+    C2D_DrawText(&text, C2D_AlignCenter | C2D_AtBaseline | C2D_WithColor, x + w / 2, y + h / 2 + 20 * 0.4, 0, 0.8, 0.8, WHITE);
 
-    return down && parent->parent->input.kUp & KEY_TOUCH;
+    if (parent->parent->input.kUp & KEY_TOUCH)
+    {
+        bool ret = down;
+        down = false;
+        return ret;
+    }
+
+    return false;
 }
 
 void ForecastView::renderBottom()
@@ -272,9 +279,12 @@ void ForecastView::renderBottom()
     }
 
     // Bottom buttons
-    settingsButton.render(
-        Screen::BOTTOM_SCREEN_WIDTH / 2, Screen::SCREEN_HEIGHT - BOTTOM_BAR_HEIGHT,
-        Screen::BOTTOM_SCREEN_WIDTH / 2, BOTTOM_BAR_HEIGHT, parent->assets.staticText.settings);
+    if (settingsButton.render(
+            Screen::BOTTOM_SCREEN_WIDTH / 2, Screen::SCREEN_HEIGHT - BOTTOM_BAR_HEIGHT,
+            Screen::BOTTOM_SCREEN_WIDTH / 2, BOTTOM_BAR_HEIGHT, parent->assets.staticText.settings))
+    {
+        parent->changeView(App::Views::FORECAST2);
+    }
     C2D_DrawRectangle(
         0, Screen::SCREEN_HEIGHT - BOTTOM_BAR_HEIGHT - 1,
         0,

@@ -3,7 +3,7 @@
 
 constexpr uint32_t CLEAR = C2D_Color32(0, 0, 0, 255);
 
-App::App(): views(this)
+App::App() : views(this)
 {
     romfsInit();
     gfxInitDefault();
@@ -47,6 +47,8 @@ void App::beforeRender()
     case views.FORECAST:
         views.forecast.poll();
         break;
+    default:
+        break;
     }
 }
 
@@ -54,11 +56,21 @@ void App::render()
 {
     C3D_FrameBegin(C3D_FRAME_SYNCDRAW);
 
-    static uint8_t fade = 255;
-
-    if (fade != 0)
+    if (views.queuedUp == Views::NIL && views.fade != 0)
     {
-        C2D_Fade(C2D_Color32(0, 0, 0, fade -= 5));
+        C2D_Fade(C2D_Color32(0, 0, 0, views.fade -= 15));
+    }
+    else if (views.queuedUp != Views::NIL)
+    {
+        if (views.fade != 255)
+        {
+            C2D_Fade(C2D_Color32(0, 0, 0, views.fade += 15));
+        }
+        else
+        {
+            views.current = views.queuedUp;
+            views.queuedUp = Views::NIL;
+        }
     }
 
     C2D_TargetClear(screen.top, CLEAR);
@@ -68,6 +80,8 @@ void App::render()
     {
     case views.FORECAST:
         views.forecast.renderTop();
+        break;
+    default:
         break;
     }
 
@@ -79,7 +93,15 @@ void App::render()
     case views.FORECAST:
         views.forecast.renderBottom();
         break;
+    default:
+        break;
     }
 
     C3D_FrameEnd(0);
+}
+
+void App::changeView(App::Views::Types type)
+{
+    views.queuedUp = type;
+    views.fade = 0;
 }

@@ -24,16 +24,22 @@
 class App
 {
     friend ForecastView;
-    
+
     struct Views
     {
         ForecastView forecast;
-        
-        enum
+
+        enum Types
         {
-            FORECAST
-        } current = FORECAST;
+            NIL,
+            FORECAST,
+            FORECAST2
+        };
         
+        uint8_t fade = 255;
+        App::Views::Types current = FORECAST;
+        App::Views::Types queuedUp = NIL;
+
         Views(App *app) : forecast(app) {};
     } views;
 
@@ -51,4 +57,5 @@ public:
     App();
     ~App();
     bool frame();
+    void changeView(App::Views::Types view);
 };

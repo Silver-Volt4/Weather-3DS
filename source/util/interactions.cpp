@@ -34,6 +34,19 @@ void InputHandler::scan()
     }
 }
 
+const touchPosition &InputHandler::touch() const
+{
+    if (kDown & KEY_TOUCH)
+    {
+        return touchStart;
+    }
+    else if (kUp & KEY_TOUCH)
+    {
+        return touchLast;
+    }
+    return touchCurrent;
+}
+
 touchPositionDiff InputHandler::drag() const
 {
     touchPositionDiff d;

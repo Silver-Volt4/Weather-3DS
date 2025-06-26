@@ -35,4 +35,5 @@ public:
     touchPositionDiff touchDelta;
     void scan();
     touchPositionDiff drag() const;
+    const touchPosition &touch() const ;
 };
