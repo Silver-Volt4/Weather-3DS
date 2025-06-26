@@ -1,3 +1,4 @@
+#include "forecast_view.h"
 #include "app.h"
 
 #include "../util/graphics.h"
@@ -283,7 +284,7 @@ void ForecastView::renderBottom()
             Screen::BOTTOM_SCREEN_WIDTH / 2, Screen::SCREEN_HEIGHT - BOTTOM_BAR_HEIGHT,
             Screen::BOTTOM_SCREEN_WIDTH / 2, BOTTOM_BAR_HEIGHT, parent->assets.staticText.settings))
     {
-        parent->changeView(App::Views::FORECAST2);
+        parent->changeView(App::Views::SETTINGS);
     }
     C2D_DrawRectangle(
         0, Screen::SCREEN_HEIGHT - BOTTOM_BAR_HEIGHT - 1,

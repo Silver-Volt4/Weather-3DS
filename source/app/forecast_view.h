@@ -4,7 +4,6 @@
 #include <vector>
 #include <optional>
 
-#include "app.h"
 #include "../data/weather_data.h"
 
 class App;
@@ -63,12 +62,15 @@ class ForecastView
     friend GlanceView;
 
     std::vector<CityWeather *> pages;
-    GlanceView glance;
-
-    ActionButton settingsButton;
 
 public:
     App *parent;
+
+private:
+    GlanceView glance;
+    ActionButton settingsButton;
+
+public:
     ForecastView(App *parent);
 
     CityWeather *currentPage = nullptr;

@@ -19,28 +19,32 @@
 #include "../util/assets.h"
 #include "../util/http.h"
 #include "../data/weather_data.h"
+
 #include "forecast_view.h"
+#include "settings_view.h"
 
 class App
 {
     friend ForecastView;
+    friend SettingsView;
 
     struct Views
     {
         ForecastView forecast;
+        SettingsView settings;
 
         enum Types
         {
             NIL,
             FORECAST,
-            FORECAST2
+            SETTINGS
         };
-        
+
         uint8_t fade = 255;
         App::Views::Types current = FORECAST;
         App::Views::Types queuedUp = NIL;
 
-        Views(App *app) : forecast(app) {};
+        Views(App *app) : forecast(app), settings(app) {};
     } views;
 
     bool running = true;

@@ -47,6 +47,9 @@ void App::beforeRender()
     case views.FORECAST:
         views.forecast.poll();
         break;
+    case views.SETTINGS:
+        views.settings.poll();
+        break;
     default:
         break;
     }
@@ -81,6 +84,9 @@ void App::render()
     case views.FORECAST:
         views.forecast.renderTop();
         break;
+    case views.SETTINGS:
+        views.settings.renderTop();
+        break;
     default:
         break;
     }
@@ -92,6 +98,9 @@ void App::render()
     {
     case views.FORECAST:
         views.forecast.renderBottom();
+        break;
+    case views.SETTINGS:
+        views.settings.renderBottom();
         break;
     default:
         break;
